@@ -33,11 +33,19 @@
           <button class="btn btn-primary" type="submit">{{ $t["filter"] }}</button>
           <a href="{{ route('view_packages') }}" class="btn btn-link">{{ $t["reset"] }}</a>
         </div>
+
+        <div class="col-6 col-md-2 mb-2">
+          <select name="sort" class="form-control" onchange="this.form.submit()">
+            <option value="">{{ $t["sort"] }}</option>
+            <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>{{ $t["price_high"] }}</option>
+            <option value="rating" {{ request('sort') == 'rating' ? 'selected' : '' }}>{{ $t["top_rated"] }}</option>
+          </select>
+        </div>
       </div>
     </form>
     <div class="row">
       @forelse ($items as $package)
-        <div class="col-lg-4 col-md-6 mb-4">
+        <div class="col-lg-4 col-md-6 mb-4 reveal">
           @include("_package_card")
         </div>
       @empty

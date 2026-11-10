@@ -4,10 +4,11 @@
   <div class="container py-4">
     <div class="row mb-4">
       <div class="col-md-7 mb-3">
-        <div class="photo-frame wide rounded" style="border-radius: 14px">
+        <div class="photo-frame wide gallery-main">
           @if ($destination->picture_url)
             <img src="{{ $destination->picture_url }}" alt="{{ $destination->name }}" />
           @endif
+          @include("_heart", ["type" => "destination", "id" => $destination->id])
         </div>
       </div>
       <div class="col-md-5">

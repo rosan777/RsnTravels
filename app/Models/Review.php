@@ -22,6 +22,16 @@ class Review extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function hotel()
+    {
+        return $this->belongsTo(Hotel::class);
+    }
+
+    public function tourPackage()
+    {
+        return $this->belongsTo(TourPackage::class);
+    }
+
     public function booking()
     {
         return $this->belongsTo(Booking::class);

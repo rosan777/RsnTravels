@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Booking;
+use App\Models\Favorite;
 use App\Models\UserEx;
 use Closure;
 use Illuminate\Http\Request;
@@ -25,6 +27,11 @@ class UserSpecificMiddleware
             $lang = "en";
         }
 
+        // - heart and cart counters for the top bar
+        $fav_keys = Auth::check() ? Favorite::where("user_id", Auth::id())->get()->map(fn ($f) => "{$f->item_type}:{$f->item_id}")->all() : [];
+        View::share("favKeys", $fav_keys);
+        View::share("cartCount", count($request->session()->get("cart", [])));
+        View::share("pendingApprovals", $userEx && $userEx->user_type == "owner" ? Booking::where("status", "Pending")->count() : 0);
         View::share("userEx", $userEx);
         View::share("lang", $lang);
         View::share("t", $texts[$lang]);

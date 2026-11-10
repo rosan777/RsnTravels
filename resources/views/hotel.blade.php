@@ -4,10 +4,11 @@
   <div class="container py-4">
     <div class="row">
       <div class="col-lg-7 mb-3">
-        <div class="photo-frame wide" style="border-radius: 14px">
+        <div class="photo-frame wide gallery-main">
           @if ($hotel->picture_url)
             <img src="{{ $hotel->picture_url }}" alt="{{ $hotel->name }}" />
           @endif
+          @include("_heart", ["type" => "hotel", "id" => $hotel->id])
         </div>
       </div>
       <div class="col-lg-5">
@@ -43,8 +44,6 @@
       </div>
       @if ($error)
         <div class="alert alert-error mb-0 mt-2">{{ $error }}</div>
-      @elseif (!$check_in)
-        <div class="text-muted small">{{ $t["pick_dates"] }}</div>
       @endif
     </form>
     <div class="row">
@@ -64,14 +63,24 @@
               @if (isset($free[$room_type->id]))
                 <div class="mt-2">
                   @if ($free[$room_type->id] > 0 && $room_type->capacity >= $guests)
-                    <span class="badge badge-success">{{ $free[$room_type->id] }} {{ $t["free_rooms"] }}</span>
-                    @if ($userEx && $userEx->user_type == "customer" && Route::has("customer_book_room"))
-                      <a href="{{ route('customer_book_room', ['id' => $room_type->id, 'check_in' => $check_in, 'check_out' => $check_out, 'guests' => $guests]) }}" class="btn btn-sm btn-primary float-right">{{ $t["book_now"] }}</a>
-                    @elseif (!$userEx)
-                      <a href="{{ route('flogin') }}" class="small float-right">{{ $t["login_to_book"] }}</a>
+                    <span class="badge badge-success">{{ $free[$room_type->id] }} {{ $t["rooms_free"] }}</span>
+                    @php($nights = max(1, \Carbon\Carbon::parse($check_in)->diffInDays(\Carbon\Carbon::parse($check_out))))
+                    <div class="meta mt-1">{{ $nights }} {{ $t["nights"] }}: <strong>৳{{ number_format($room_type->base_price * $nights) }}</strong></div>
+                    @if (!$userEx)
+                      <a href="{{ route('flogin') }}" class="btn btn-sm btn-cta btn-block mt-2"><i class="fas fa-shopping-cart"></i> {{ $t["login_to_book"] }}</a>
+                    @elseif ($userEx->user_type == "customer")
+                      <form method="post" action="{{ route('customer_add_to_cart') }}" class="mt-2">
+                        @csrf
+                        <input type="hidden" name="type" value="hotel" />
+                        <input type="hidden" name="room_type_id" value="{{ $room_type->id }}" />
+                        <input type="hidden" name="check_in" value="{{ $check_in }}" />
+                        <input type="hidden" name="check_out" value="{{ $check_out }}" />
+                        <input type="hidden" name="guests" value="{{ $guests }}" />
+                        <button class="btn btn-sm btn-cta btn-block" type="submit"><i class="fas fa-cart-plus"></i> {{ $t["add_to_cart"] }}</button>
+                      </form>
                     @endif
                   @else
-                    <span class="badge badge-secondary">0 {{ $t["free_rooms"] }}</span>
+                    <span class="badge badge-secondary">{{ $t["sold_out"] }}</span>
                   @endif
                 </div>
               @endif

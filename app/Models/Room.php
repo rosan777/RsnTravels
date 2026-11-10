@@ -13,6 +13,7 @@ class Room extends Model
         ["Available", "Available"],
         ["Occupied", "Occupied"],
         ["Cleaning", "Cleaning"],
+        ["Maintenance", "Maintenance"],
     ];
 
     protected $fillable = ["room_type_id", "number", "status"];

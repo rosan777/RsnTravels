@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Destination;
+use App\Models\Favorite;
 use App\Models\Hotel;
 use App\Models\Review;
 use App\Models\Room;
@@ -15,7 +16,9 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use App\Support\Photo;
 
 class RsnController extends Controller
 {
@@ -67,16 +70,28 @@ class RsnController extends Controller
     // Public Area
     public function index(Request $request)
     {
-        $packages_show_on_site = TourPackage::with("destination")->where("show_on_site", true)->take(6)->get();
-        $hotels_show_on_site = Hotel::with("roomTypes")->where("show_on_site", true)->take(6)->get();
         $destinations = Destination::where("show_on_site", true)->get();
+        $slides = array_map(fn ($h) => [$h[0], $h[1], Photo::url($h[1], 2000)], Photo::HERO);
 
         return view("index", [
-            "packages" => $packages_show_on_site,
-            "hotels" => $hotels_show_on_site,
+            "packages" => TourPackage::with("destination")->withAvg("reviews", "rating")->withCount("reviews")->where("show_on_site", true)->take(6)->get(),
+            "hotels" => Hotel::with("roomTypes")->withAvg("reviews", "rating")->withCount("reviews")->where("show_on_site", true)->take(6)->get(),
             "destinations" => $destinations,
-            "slides" => $destinations->filter(fn ($d) => $d->image_url)->take(5),
+            "slides" => $slides,
+            "typed" => ["Bali", "the Maldives", "Santorini", "Cox's Bazar", "the Swiss Alps"],
+            "quotes" => Review::with("user", "hotel", "tourPackage")->where("rating", ">=", 4)->where("comment", "!=", "")->latest()->take(3)->get(),
+            "stats" => [
+                "bookings" => Booking::count(),
+                "hotels" => Hotel::count(),
+                "packages" => TourPackage::count(),
+                "reviews" => Review::count(),
+            ],
         ]);
+    }
+
+    public function project_profile(Request $request)
+    {
+        return view("project_profile", ["title" => "Project Profile - TravelDemo"]);
     }
 
     public function view_destinations(Request $request)
@@ -100,7 +115,7 @@ class RsnController extends Controller
 
     public function view_packages(Request $request)
     {
-        $items = TourPackage::with("destination")->where("show_on_site", true);
+        $items = TourPackage::with("destination")->withAvg("reviews", "rating")->withCount("reviews")->where("show_on_site", true);
 
         if ($request->input("destination")) {
             $items->where("destination_id", $request->input("destination"));
@@ -116,7 +131,7 @@ class RsnController extends Controller
         }
 
         return view("packages", [
-            "items" => $items->orderBy("price")->get(),
+            "items" => $this->sort_items($items, $request, "price"),
             "destinations" => Destination::where("show_on_site", true)->orderBy("name")->get(),
             "interests" => TourPackage::INTERESTS,
         ]);
@@ -128,13 +143,13 @@ class RsnController extends Controller
         if (!$package) {
             return $this->not_found("Package not found.");
         }
-        $reviews = Review::with("user")->where("tour_package_id", $package->id)->latest()->get();
+        $reviews = Review::with("user")->where("tour_package_id", $package->id)->latest()->take(10)->get();
         return view("package", ["package" => $package, "reviews" => $reviews]);
     }
 
     public function view_hotels(Request $request)
     {
-        $items = Hotel::with("roomTypes")->where("show_on_site", true);
+        $items = Hotel::with("roomTypes")->withAvg("reviews", "rating")->withCount("reviews")->where("show_on_site", true);
 
         if ($request->input("city")) {
             $items->where("city", $request->input("city"));
@@ -148,7 +163,7 @@ class RsnController extends Controller
         }
 
         return view("hotels", [
-            "items" => $items->orderBy("name")->get(),
+            "items" => $this->sort_items($items, $request, "name"),
             "cities" => Hotel::where("show_on_site", true)->orderBy("city")->distinct()->pluck("city"),
         ]);
     }
@@ -161,9 +176,9 @@ class RsnController extends Controller
         }
 
         // - when dates are given, show how many rooms of each type are free
-        $check_in = $request->input("check_in");
-        $check_out = $request->input("check_out");
-        $guests = $request->input("guests", 1);
+        $check_in = $request->input("check_in", Carbon::today()->addDays(7)->toDateString());
+        $check_out = $request->input("check_out", Carbon::today()->addDays(9)->toDateString());
+        $guests = $request->input("guests", 2);
         $error = null;
         $free = [];
         if ($check_in && $check_out) {
@@ -175,7 +190,7 @@ class RsnController extends Controller
             }
         }
 
-        $reviews = Review::with("user")->where("hotel_id", $hotel->id)->latest()->get();
+        $reviews = Review::with("user")->where("hotel_id", $hotel->id)->latest()->take(10)->get();
 
         return view("hotel", [
             "hotel" => $hotel,
@@ -359,12 +374,30 @@ class RsnController extends Controller
     public function owner_dashboard(Request $request)
     {
         $bookings = Booking::whereNotIn("status", ["Cancelled"]);
+
+        // - bookings per month for the last 6 months (grouped here so it works on any database)
+        $from = Carbon::today()->startOfMonth()->subMonths(5);
+        $months = [];
+        for ($i = 0; $i < 6; $i++) {
+            $months[$from->copy()->addMonths($i)->format("Y-m")] = 0;
+        }
+        foreach (Booking::where("check_in", ">=", $from)->whereNotIn("status", ["Cancelled"])->get(["check_in"]) as $b) {
+            $key = $b->check_in->format("Y-m");
+            if (isset($months[$key])) {
+                $months[$key]++;
+            }
+        }
+
         return view("owner.dashboard", [
             "bookings_count" => (clone $bookings)->count(),
             "revenue" => (clone $bookings)->sum("total"),
             "hotels_count" => Hotel::count(),
             "packages_count" => TourPackage::count(),
             "pending_count" => Booking::where("status", "Pending")->count(),
+            "pending" => Booking::with("user", "room.roomType.hotel", "tourPackage")->where("status", "Pending")->orderBy("check_in")->take(6)->get(),
+            "month_labels" => array_map(fn ($m) => Carbon::parse($m . "-01")->format("M"), array_keys($months)),
+            "month_values" => array_values($months),
+            "status_counts" => Booking::select("status", DB::raw("count(*) as n"))->groupBy("status")->pluck("n", "status"),
         ]);
     }
 
@@ -401,5 +434,362 @@ class RsnController extends Controller
                 ->count(),
             "spent" => (clone $bookings)->whereNotIn("status", ["Cancelled"])->sum("total"),
         ]);
+    }
+
+    // - sort and return a list query (sort=price_low|price_high|rating|name)
+    private function sort_items($query, Request $request, $default)
+    {
+        $sort = $request->input("sort");
+        if ($sort == "rating") {
+            return $query->orderByDesc("reviews_avg_rating")->get();
+        }
+        $price = $default == "price" ? "price" : null;
+        if ($sort == "price_high" && $price) {
+            return $query->orderByDesc("price")->get();
+        }
+        return $query->orderBy($default)->get();
+    }
+
+    // Favorites (any logged in user)
+    public function toggle_favorite(Request $request)
+    {
+        $type = $request->input("type");
+        $id = (int) $request->input("id");
+        if (!in_array($type, Favorite::TYPES) || $id < 1) {
+            return back()->with("error", "Nothing to save");
+        }
+        $row = Favorite::where(["user_id" => Auth::id(), "item_type" => $type, "item_id" => $id])->first();
+        if ($row) {
+            $row->delete();
+            return back()->with("success", "Removed from your favorites");
+        }
+        Favorite::create(["user_id" => Auth::id(), "item_type" => $type, "item_id" => $id]);
+        return back()->with("success", "Saved to your favorites");
+    }
+
+    public function customer_favorites(Request $request)
+    {
+        $rows = Favorite::where("user_id", Auth::id())->get();
+        $ids = fn ($type) => $rows->where("item_type", $type)->pluck("item_id");
+        return view("customer.favorites", [
+            "destinations" => Destination::whereIn("id", $ids("destination"))->get(),
+            "packages" => TourPackage::with("destination")->withAvg("reviews", "rating")->withCount("reviews")->whereIn("id", $ids("package"))->get(),
+            "hotels" => Hotel::with("roomTypes")->withAvg("reviews", "rating")->withCount("reviews")->whereIn("id", $ids("hotel"))->get(),
+        ]);
+    }
+
+    // Customer cart: items live in the session until checkout
+    private function cart_lines(Request $request)
+    {
+        $lines = [];
+        foreach ($request->session()->get("cart", []) as $key => $item) {
+            if ($item["type"] == "hotel") {
+                $room_type = RoomType::with("hotel", "rooms")->find($item["room_type_id"]);
+                if (!$room_type) {
+                    continue;
+                }
+                $nights = max(1, Carbon::parse($item["check_in"])->diffInDays(Carbon::parse($item["check_out"])));
+                $lines[] = $item + [
+                    "key" => $key,
+                    "title" => $room_type->hotel->name . " - " . $room_type->name,
+                    "picture" => $room_type->picture_url,
+                    "detail" => Carbon::parse($item["check_in"])->format("d M") . " - " . Carbon::parse($item["check_out"])->format("d M Y") . " · {$nights} night(s) · {$item['guests']} guest(s)",
+                    "total" => $room_type->base_price * $nights,
+                    "room_type" => $room_type,
+                ];
+            } else {
+                $package = TourPackage::with("destination")->find($item["package_id"]);
+                if (!$package) {
+                    continue;
+                }
+                $lines[] = $item + [
+                    "key" => $key,
+                    "title" => $package->name,
+                    "picture" => $package->picture_url,
+                    "detail" => Carbon::parse($item["check_in"])->format("d M Y") . " · {$package->days} days · {$item['guests']} traveler(s)",
+                    "total" => $package->price * $item["guests"],
+                    "package" => $package,
+                ];
+            }
+        }
+        return $lines;
+    }
+
+    public function customer_cart(Request $request)
+    {
+        $lines = $this->cart_lines($request);
+        return view("customer.cart", ["lines" => $lines, "total" => array_sum(array_column($lines, "total"))]);
+    }
+
+    public function customer_add_to_cart(Request $request)
+    {
+        $guests = (int) $request->input("guests", 1);
+        if ($request->input("type") == "package") {
+            $package = TourPackage::where("id", $request->input("package_id"))->where("show_on_site", true)->first();
+            if (!$package) {
+                return $this->not_found("Package not found.");
+            }
+            $date = $request->input("travel_date");
+            $error = $this->check_dates($date, Carbon::parse($date ?: "today")->addDays($package->days), $guests);
+            if ($error) {
+                return back()->with("error", $error);
+            }
+            $item = ["type" => "package", "package_id" => $package->id, "check_in" => Carbon::parse($date)->toDateString(), "check_out" => Carbon::parse($date)->addDays($package->days)->toDateString(), "guests" => $guests];
+        } else {
+            $room_type = RoomType::with("rooms")->find($request->input("room_type_id"));
+            if (!$room_type) {
+                return $this->not_found("Room type not found.");
+            }
+            $error = $this->check_dates($request->input("check_in"), $request->input("check_out"), $guests);
+            if (!$error && $room_type->capacity < $guests) {
+                $error = "This room takes up to {$room_type->capacity} guests";
+            }
+            if (!$error && $this->free_rooms($room_type, $request->input("check_in"), $request->input("check_out"))->isEmpty()) {
+                $error = "Sorry, no free room of this type for those dates";
+            }
+            if ($error) {
+                return back()->with("error", $error);
+            }
+            $item = ["type" => "hotel", "room_type_id" => $room_type->id, "check_in" => Carbon::parse($request->input("check_in"))->toDateString(), "check_out" => Carbon::parse($request->input("check_out"))->toDateString(), "guests" => $guests];
+        }
+        $cart = $request->session()->get("cart", []);
+        $cart[uniqid()] = $item;
+        $request->session()->put("cart", $cart);
+        return redirect()->route("customer_cart")->with("success", "Added to your cart");
+    }
+
+    public function customer_remove_from_cart(Request $request, $key)
+    {
+        $cart = $request->session()->get("cart", []);
+        unset($cart[$key]);
+        $request->session()->put("cart", $cart);
+        return back()->with("success", "Removed from your cart");
+    }
+
+    // - checkout: one Pending booking per cart line; the agency owner approves them next
+    public function customer_checkout(Request $request)
+    {
+        $lines = $this->cart_lines($request);
+        if (!$lines) {
+            return back()->with("error", "Your cart is empty");
+        }
+        $method = $request->input("payment_method");
+        if (!in_array($method, array_column(Booking::PAYMENT_METHODS, 0))) {
+            return back()->with("error", "Please choose a payment method");
+        }
+        $paid = $method != "PayAtHotel";
+
+        // - re-check every room first so nothing is half booked
+        $rooms = [];
+        $taken = [];
+        foreach ($lines as $line) {
+            if ($line["type"] == "hotel") {
+                // - two cart lines for the same dates must get two different rooms
+                $free = $this->free_rooms($line["room_type"], $line["check_in"], $line["check_out"])
+                    ->reject(fn ($room) => in_array($room->id, $taken))
+                    ->first();
+                if (!$free) {
+                    return redirect()->route("customer_cart")->with("error", "Sorry, " . $line["title"] . " was just taken for those dates. Please remove it.");
+                }
+                $rooms[$line["key"]] = $free;
+                $taken[] = $free->id;
+            }
+        }
+
+        $ids = [];
+        DB::transaction(function () use ($lines, $rooms, $method, $paid, &$ids) {
+            foreach ($lines as $line) {
+                $ids[] = Booking::create([
+                    "user_id" => Auth::id(),
+                    "booking_type" => $line["type"] == "hotel" ? "Hotel" : "Package",
+                    "room_id" => $line["type"] == "hotel" ? $rooms[$line["key"]]->id : null,
+                    "tour_package_id" => $line["type"] == "package" ? $line["package_id"] : null,
+                    "check_in" => $line["check_in"],
+                    "check_out" => $line["check_out"],
+                    "guests" => $line["guests"],
+                    "total" => $line["total"],
+                    "status" => "Pending",
+                    "payment_method" => $method,
+                    "payment_status" => $paid ? "PAID" : "UNPAID",
+                ])->id;
+            }
+        });
+        $request->session()->forget("cart");
+        return redirect()->route("customer_bookings")->with("success", count($ids) . " booking request(s) sent. The agency owner will approve them soon.");
+    }
+
+    public function customer_bookings(Request $request)
+    {
+        return view("customer.bookings", [
+            "bookings" => Booking::with("room.roomType.hotel", "tourPackage", "review")->where("user_id", Auth::id())->latest("id")->get(),
+        ]);
+    }
+
+    private function own_booking($id)
+    {
+        return Booking::with("room.roomType.hotel", "tourPackage.destination", "user")->where("id", $id)->where("user_id", Auth::id())->first();
+    }
+
+    public function customer_cancel_booking(Request $request, $id)
+    {
+        $booking = $this->own_booking($id);
+        if (!$booking) {
+            return $this->not_found("Booking not found.");
+        }
+        if (!in_array($booking->status, ["Pending", "Confirmed"])) {
+            return back()->with("error", "This booking can no longer be cancelled");
+        }
+        $booking->status = "Cancelled";
+        if ($booking->payment_status == "PAID") {
+            $booking->payment_status = "UNPAID";
+        }
+        $booking->save();
+        return back()->with("success", "Booking cancelled" . ($booking->payment_method != "PayAtHotel" ? ". Your payment will be refunded (demo)." : ""));
+    }
+
+    public function customer_invoice(Request $request, $id)
+    {
+        $booking = $this->own_booking($id);
+        if (!$booking) {
+            return $this->not_found("Booking not found.");
+        }
+        return view("customer.invoice", ["booking" => $booking]);
+    }
+
+    public function customer_review(Request $request, $id)
+    {
+        $booking = $this->own_booking($id);
+        if (!$booking) {
+            return $this->not_found("Booking not found.");
+        }
+        if ($booking->status != "Completed" || $booking->review) {
+            return back()->with("error", "You can review a completed trip once");
+        }
+        $rating = (int) $request->input("rating");
+        if ($rating < 1 || $rating > 5) {
+            return back()->with("error", "Please pick 1 to 5 stars");
+        }
+        Review::create([
+            "user_id" => Auth::id(),
+            "booking_id" => $booking->id,
+            "hotel_id" => $booking->booking_type == "Hotel" ? $booking->room->roomType->hotel_id : null,
+            "tour_package_id" => $booking->booking_type == "Package" ? $booking->tour_package_id : null,
+            "rating" => $rating,
+            "comment" => trim((string) $request->input("comment")),
+        ]);
+        return back()->with("success", "Thank you for your review");
+    }
+
+    // Agency Owner: approve or reject booking requests
+    public function owner_bookings(Request $request)
+    {
+        $status = $request->input("status");
+        $query = Booking::with("user", "room.roomType.hotel", "tourPackage")->latest("id");
+        if ($status) {
+            $query->where("status", $status);
+        }
+        return view("owner.bookings", ["bookings" => $query->paginate(20)->withQueryString(), "status" => $status]);
+    }
+
+    public function owner_approve_booking(Request $request, $id)
+    {
+        $booking = Booking::find($id);
+        if (!$booking || $booking->status != "Pending") {
+            return back()->with("error", "This booking is not waiting for approval");
+        }
+        $booking->status = "Confirmed";
+        $booking->save();
+        return back()->with("success", "Booking #{$booking->id} approved. Hotel staff can now see it.");
+    }
+
+    public function owner_reject_booking(Request $request, $id)
+    {
+        $booking = Booking::find($id);
+        if (!$booking || $booking->status != "Pending") {
+            return back()->with("error", "This booking is not waiting for approval");
+        }
+        $booking->status = "Cancelled";
+        if ($booking->payment_status == "PAID") {
+            $booking->payment_status = "UNPAID";
+        }
+        $booking->save();
+        return back()->with("success", "Booking #{$booking->id} rejected" . ($booking->payment_method != "PayAtHotel" ? " and the payment refunded (demo)" : ""));
+    }
+
+    // - show or hide hotels and packages on the public site
+    public function owner_catalog(Request $request)
+    {
+        return view("owner.catalog", [
+            "hotels" => Hotel::orderBy("name")->get(),
+            "packages" => TourPackage::with("destination")->orderBy("name")->get(),
+            "destinations" => Destination::orderBy("name")->get(),
+        ]);
+    }
+
+    public function owner_toggle_item(Request $request)
+    {
+        $model = ["hotel" => Hotel::class, "package" => TourPackage::class, "destination" => Destination::class][$request->input("type")] ?? null;
+        $item = $model ? $model::find($request->input("id")) : null;
+        if (!$item) {
+            return back()->with("error", "Item not found");
+        }
+        $item->show_on_site = !$item->show_on_site;
+        $item->save();
+        return back()->with("success", $item->name . ($item->show_on_site ? " is now shown on the site" : " is now hidden from the site"));
+    }
+
+    // Hotel Staff: arrivals, check-in, check-out and the room board
+    public function staff_bookings(Request $request)
+    {
+        $with = ["user", "room.roomType.hotel"];
+        return view("staff.bookings", [
+            "arrivals" => Booking::with($with)->where("booking_type", "Hotel")->where("status", "Confirmed")->orderBy("check_in")->take(40)->get(),
+            "in_house" => Booking::with($with)->where("booking_type", "Hotel")->where("status", "CheckedIn")->orderBy("check_out")->get(),
+            "waiting" => Booking::where("booking_type", "Hotel")->where("status", "Pending")->count(),
+        ]);
+    }
+
+    public function staff_check_in(Request $request, $id)
+    {
+        $booking = Booking::with("room")->where("booking_type", "Hotel")->find($id);
+        if (!$booking || $booking->status != "Confirmed") {
+            return back()->with("error", "Only approved bookings can be checked in");
+        }
+        $booking->status = "CheckedIn";
+        $booking->save();
+        $booking->room->update(["status" => "Occupied"]);
+        return back()->with("success", "{$booking->user->name} checked in to room {$booking->room->number}");
+    }
+
+    public function staff_check_out(Request $request, $id)
+    {
+        $booking = Booking::with("room")->where("booking_type", "Hotel")->find($id);
+        if (!$booking || $booking->status != "CheckedIn") {
+            return back()->with("error", "This guest is not checked in");
+        }
+        $booking->status = "Completed";
+        if ($booking->payment_status == "UNPAID") {
+            $booking->payment_status = "PAID";
+        }
+        $booking->save();
+        $booking->room->update(["status" => "Cleaning"]);
+        return back()->with("success", "Checked out. Room {$booking->room->number} is marked for cleaning.");
+    }
+
+    public function staff_rooms(Request $request)
+    {
+        return view("staff.rooms", ["hotels" => Hotel::with("roomTypes.rooms")->orderBy("name")->get()]);
+    }
+
+    public function staff_set_room(Request $request, $id)
+    {
+        $room = Room::find($id);
+        $status = $request->input("status");
+        if (!$room || !in_array($status, array_column(Room::STATUSES, 0))) {
+            return back()->with("error", "Could not update the room");
+        }
+        $room->status = $status;
+        $room->save();
+        return back()->with("success", "Room {$room->number} is now {$status}");
     }
 }

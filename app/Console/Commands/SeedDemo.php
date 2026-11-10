@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Photo;
 use App\Models\Booking;
 use App\Models\Destination;
 use App\Models\Hotel;
@@ -102,7 +103,7 @@ class SeedDemo extends Command
         foreach (self::DESTINATIONS as [$name, $country, $best_time, $description]) {
             $destinations[$name] = Destination::updateOrCreate(
                 ["name" => $name],
-                ["country" => $country, "best_time" => $best_time, "description" => $description, "show_on_site" => true],
+                ["country" => $country, "best_time" => $best_time, "description" => $description, "show_on_site" => true, "image_url" => Photo::url(Photo::DESTINATIONS[$name])],
             );
         }
 
@@ -123,6 +124,7 @@ class SeedDemo extends Command
                     "includes" => implode("\n", $includes),
                     "excludes" => implode("\n", $excludes),
                     "show_on_site" => true,
+                    "image_url" => Photo::url(Photo::PACKAGES[$name] ?? Photo::DESTINATIONS[$dest]),
                 ],
             );
         }
@@ -137,6 +139,7 @@ class SeedDemo extends Command
                     "amenities" => $amenities,
                     "description" => $description,
                     "show_on_site" => true,
+                    "image_url" => Photo::url(Photo::HOTELS[$name]),
                 ],
             );
             foreach ($room_types as $r => [$type_name, $capacity, $price, $count]) {

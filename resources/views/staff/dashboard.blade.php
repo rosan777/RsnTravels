@@ -16,6 +16,8 @@
         </div>
       @endforeach
     </div>
+    <a href="{{ route('staff_bookings') }}" class="btn btn-primary mb-2">{{ $t["bookings"] }}</a>
+    <a href="{{ route('staff_rooms') }}" class="btn btn-outline-primary mb-2">{{ $t["room_board"] }}</a>
     @foreach ([["Arrivals today", $arrivals], ["Departures today", $departures]] as $block)
       <h4 class="mt-3">{{ $block[0] }}</h4>
       @if ($block[1]->isEmpty())
