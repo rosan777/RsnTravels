@@ -1,21 +1,21 @@
 @php
-  $row1 = [["fab fa-php", "PHP 8.3"], ["fab fa-laravel", "Laravel 13"], ["fas fa-database", "PostgreSQL (Neon)"], ["fab fa-bootstrap", "Bootstrap 4"], ["fab fa-html5", "Blade templates"], ["fas fa-chart-bar", "Chart.js"], ["fas fa-vial", "PHPUnit"], ["fas fa-cloud", "Vercel"]];
-  $row2 = [["fas fa-user-shield", "Role based access"], ["fas fa-calendar-check", "Date overlap booking"], ["fas fa-language", "English / বাংলা"], ["fas fa-heart", "Wishlist"], ["fas fa-shopping-cart", "Cart and checkout"], ["fas fa-file-invoice", "Invoices"], ["fas fa-camera", "Wikimedia photos"], ["fab fa-git-alt", "Git"]];
+  $row1 = ["PHP 8.3", "Laravel 13", "Blade Templates", "Eloquent ORM", "PostgreSQL", "Neon", "SQLite"];
+  $row2 = ["Bootstrap 4", "HTML", "CSS", "JavaScript", "jQuery", "Chart.js", "PHPUnit", "Vercel", "GitHub"];
 @endphp
-<section class="tech-section">
-  <div class="container text-center mb-3 reveal">
-    <h3>{{ $t["tech_title"] }}</h3>
-    <p class="mb-0">{{ $t["tech_text"] }}</p>
-  </div>
-  @foreach ([[$row1, ""], [$row2, "reverse"]] as $strip)
-    <div class="strip mb-2">
-      <div class="strip-track {{ $strip[1] }}">
-        @for ($i = 0; $i < 2; $i++)
-          @foreach ($strip[0] as $tech)
-            <span class="tech-pill"><i class="{{ $tech[0] }}"></i>{{ $tech[1] }}</span>
-          @endforeach
-        @endfor
+<div class="tech-section">
+  <div class="container">
+    <h2 class="tech-title mb-4">{{ $t["tech_title"] }}</h2>
+    @foreach ([$row1, $row2] as $row)
+      <div class="tech-row">
+        @foreach ($row as $tech)<span class="tech-pill">{{ $tech }}</span>@endforeach
       </div>
-    </div>
-  @endforeach
-</section>
+    @endforeach
+  </div>
+</div>
+<style>
+  .tech-section { background: #0b0d12; margin-top: 3rem; padding: 3rem 0 2.5rem; }
+  .tech-title { color: #fff; font-weight: 700; font-size: 1.6rem; }
+  .tech-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+  .tech-pill { padding: 9px 26px; border-radius: 999px; background: #1f2630; border: 1px solid #333c4a; color: #c9d1e6; font-size: .95rem; transition: color .2s, border-color .2s; }
+  .tech-pill:hover { color: #fff; border-color: #ff6b57; }
+</style>
