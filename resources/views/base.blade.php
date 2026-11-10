@@ -91,7 +91,7 @@
             <a href="{{ route('flogin') }}">{{ $t["login"] }}</a>
           @endauth
         </div>
-        <div class="text-center text-md-right">© 2024 OANRO. All rights reserved.</div>
+        <div class="text-center text-md-right">&copy; 2024 OANRO. All rights reserved.</div>
       </div>
     </footer>
   </body>
