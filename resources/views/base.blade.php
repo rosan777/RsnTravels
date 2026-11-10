@@ -84,10 +84,6 @@
         <div class="footer-links mb-2 mb-md-0 text-center">
           <a href="{{ route('index') }}">{{ $t["home"] }}</a>
           <a href="{{ route('view_destinations') }}">{{ $t["destinations"] }}</a>
-          <a href="{{ route('view_packages') }}">{{ $t["packages"] }}</a>
-          <a href="{{ route('view_hotels') }}">{{ $t["hotels"] }}</a>
-          <a href="{{ route('offers') }}">{{ $t["offers"] }}</a>
-          <a href="{{ route('about') }}">{{ $t["about"] }}</a>
           <a href="{{ route('project_profile') }}">{{ $t["project_profile"] }}</a>
           @auth
             <a href="{{ route('dashboard') }}">{{ $t["dashboard"] }}</a>
@@ -95,7 +91,7 @@
             <a href="{{ route('flogin') }}">{{ $t["login"] }}</a>
           @endauth
         </div>
-        <div class="text-center text-md-right">&copy; 2024 OANRO. All rights reserved.</div>
+        <div class="text-center text-md-right">© 2024 OANRO. All rights reserved.</div>
       </div>
     </footer>
   </body>
