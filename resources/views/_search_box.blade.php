@@ -1,8 +1,8 @@
 <form method="get" action="{{ route('search_rooms') }}" class="search-box">
   <div class="form-row">
-    <div class="col-md-4 mb-2 mb-md-0">
+    <div class="col-md-3 mb-2 mb-md-0">
       <label for="where">{{ $t["where_to"] }}</label>
-      <input type="text" name="where" id="where" class="form-control" placeholder="Bali, Cox's Bazar..." value="{{ $where ?? '' }}" />
+      <input type="text" name="where" id="where" class="form-control" placeholder="Bali, Kyoto, Iceland..." value="{{ $where ?? '' }}" />
     </div>
     <div class="col-6 col-md-3 mb-2 mb-md-0">
       <label for="check_in">{{ $t["check_in"] }}</label>
@@ -12,12 +12,12 @@
       <label for="check_out">{{ $t["check_out"] }}</label>
       <input type="date" name="check_out" id="check_out" class="form-control" min="{{ now()->addDay()->toDateString() }}" value="{{ $check_out ?? now()->addDays(10)->toDateString() }}" required />
     </div>
-    <div class="col-6 col-md-1 mb-2 mb-md-0">
+    <div class="col-6 col-md-2 mb-2 mb-md-0">
       <label for="guests">{{ $t["guests"] }}</label>
       <input type="number" name="guests" id="guests" class="form-control" min="1" max="10" value="{{ $guests ?? 2 }}" />
     </div>
     <div class="col-6 col-md-1 d-flex align-items-end">
-      <button type="submit" class="btn btn-primary btn-block">{{ $t["search"] }}</button>
+      <button type="submit" class="btn btn-primary btn-block" aria-label="{{ $t["search"] }}"><i class="fas fa-search"></i></button>
     </div>
   </div>
 </form>

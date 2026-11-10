@@ -38,6 +38,7 @@
           <li class="nav-item"><a class="nav-link" href="{{ route('view_destinations') }}">{{ $t["destinations"] }}</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ route('view_packages') }}">{{ $t["packages"] }}</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ route('view_hotels') }}">{{ $t["hotels"] }}</a></li>
+          <li class="nav-item"><a class="nav-link" href="{{ route('offers') }}">{{ $t["offers"] }}</a></li>
           <li class="nav-item"><a class="nav-link" href="{{ route('project_profile') }}">{{ $t["project_profile"] }}</a></li>
         </ul>
       </div>
@@ -85,6 +86,8 @@
           <a href="{{ route('view_destinations') }}">{{ $t["destinations"] }}</a>
           <a href="{{ route('view_packages') }}">{{ $t["packages"] }}</a>
           <a href="{{ route('view_hotels') }}">{{ $t["hotels"] }}</a>
+          <a href="{{ route('offers') }}">{{ $t["offers"] }}</a>
+          <a href="{{ route('about') }}">{{ $t["about"] }}</a>
           <a href="{{ route('project_profile') }}">{{ $t["project_profile"] }}</a>
           @auth
             <a href="{{ route('dashboard') }}">{{ $t["dashboard"] }}</a>
@@ -92,7 +95,7 @@
             <a href="{{ route('flogin') }}">{{ $t["login"] }}</a>
           @endauth
         </div>
-        <div class="text-center text-md-right">&copy; 2024 OANRO. All rights reserved.<div class="small">{{ $t["photo_credit"] }}</div></div>
+        <div class="text-center text-md-right">&copy; 2024 OANRO. All rights reserved.</div>
       </div>
     </footer>
   </body>

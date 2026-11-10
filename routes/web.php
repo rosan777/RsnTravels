@@ -12,6 +12,8 @@ Route::get("/packages", [RsnController::class, "view_packages"])->name("view_pac
 Route::get("/packages/{id}", [RsnController::class, "view_package"])->name("view_package");
 Route::get("/hotels", [RsnController::class, "view_hotels"])->name("view_hotels");
 Route::get("/hotels/{id}", [RsnController::class, "view_hotel"])->name("view_hotel");
+Route::get("/offers", [RsnController::class, "offers"])->name("offers");
+Route::get("/about", [RsnController::class, "about"])->name("about");
 Route::get("/project-profile", [RsnController::class, "project_profile"])->name("project_profile");
 Route::get("/search-rooms", [RsnController::class, "search_rooms"])->name("search_rooms");
 Route::get("/setup-demo/{token}", [RsnController::class, "setup_demo"])->name("setup_demo");

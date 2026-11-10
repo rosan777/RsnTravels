@@ -49,8 +49,10 @@ class SeedDemo extends Command
         ["Maldives", "Maldives", "November - April", "Clear lagoons, coral reefs and water villas."],
         ["Santorini", "Greece", "May - October", "White villages on a volcanic caldera with famous sunsets."],
         ["Banff", "Canada", "June - September", "Turquoise lakes and the Rocky Mountains."],
-        ["Cox's Bazar", "Bangladesh", "November - March", "One of the longest natural sea beaches in the world."],
-        ["Sundarbans", "Bangladesh", "November - February", "The largest mangrove forest, home of the Royal Bengal tiger."],
+        ["Kyoto", "Japan", "March - May, October - November", "Temples, bamboo groves and old tea streets in Japan's former capital."],
+        ["Iceland", "Iceland", "June - August, September - March", "Waterfalls, glaciers, black sand beaches and the northern lights."],
+        ["Machu Picchu", "Peru", "May - September", "The Inca citadel in the clouds, with the Sacred Valley and Cusco."],
+        ["Dubai", "United Arab Emirates", "November - March", "A glass skyline, desert dunes, souks and long sandy beaches."],
     ];
 
     // destination, name, days, price, interest, description, itinerary, includes, excludes
@@ -64,9 +66,11 @@ class SeedDemo extends Command
         ["Maldives", "Maldives Water Villa Stay", 4, 155000, "calm", "Three nights over the lagoon with sea plane transfer.", ["Arrive in Male, sea plane to resort", "Snorkelling and spa", "Sandbank picnic", "Fly home"], ["Water villa (3 nights)", "All meals", "Sea plane transfer"], ["Air tickets", "Diving courses"]],
         ["Santorini", "Santorini Sunset Holiday", 5, 135000, "calm", "Oia sunsets, black sand beaches and a caldera cruise.", ["Arrive in Fira", "Oia village and sunset", "Caldera boat cruise", "Beach day at Perissa", "Fly home"], ["Hotel (4 nights)", "Breakfast", "Boat cruise"], ["Air tickets", "Visa fee"]],
         ["Banff", "Banff and Lake Louise", 6, 175000, "nature", "Lake Louise, Moraine Lake and the Icefields Parkway.", ["Arrive in Calgary, drive to Banff", "Lake Louise and Moraine Lake", "Icefields Parkway", "Banff gondola", "Johnston Canyon walk", "Fly home"], ["Hotel (5 nights)", "Breakfast", "Car rental"], ["Air tickets", "Visa fee", "Park pass"]],
-        ["Cox's Bazar", "Cox's Bazar Beach Weekend", 3, 12500, "family", "Sea beach, Himchari and Inani by jeep.", ["Arrive and beach evening", "Himchari waterfall and Inani beach", "Morning walk and go home"], ["Hotel (2 nights)", "Breakfast", "Jeep tour"], ["Bus or air tickets", "Lunch and dinner"]],
-        ["Cox's Bazar", "Cox's Bazar and Saint Martin", 4, 21000, "nature", "Beach town plus the coral island of Saint Martin.", ["Cox's Bazar arrival", "Ship to Saint Martin", "Island and Chera Dwip", "Back and go home"], ["Hotels (3 nights)", "Ship tickets", "Breakfast"], ["Bus or air tickets"]],
-        ["Sundarbans", "Sundarbans Boat Safari", 3, 16500, "adventure", "Three days on a boat through the mangrove forest.", ["Board at Khulna, cruise to Karamjal", "Kotka beach and forest walk", "Hiron Point and back to Khulna"], ["Boat cabin", "All meals", "Forest permits", "Guide"], ["Travel to Khulna"]],
+        ["Kyoto", "Kyoto Temples Weekend", 3, 78000, "calm", "Golden Pavilion, Fushimi Inari and the Arashiyama bamboo grove.", ["Arrive in Osaka, train to Kyoto", "Fushimi Inari, Kiyomizu-dera and Gion evening walk", "Kinkaku-ji, Arashiyama bamboo grove and fly home"], ["Ryokan (2 nights)", "Breakfast", "Rail pass", "Guide for one day"], ["Air tickets", "Visa fee", "Lunch and dinner"]],
+        ["Kyoto", "Kyoto and Nara Culture Trip", 4, 98000, "family", "Temples, deer park and a tea ceremony.", ["Arrive and settle in Kyoto", "Nara deer park and Todai-ji temple", "Tea ceremony and Kiyomizu-dera", "Free morning and fly home"], ["Ryokan (3 nights)", "Breakfast", "Rail pass", "Tea ceremony"], ["Air tickets", "Visa fee"]],
+        ["Iceland", "Iceland Golden Circle Escape", 3, 118000, "nature", "Gullfoss, Geysir, two waterfalls and the Blue Lagoon.", ["Arrive in Reykjavik, Golden Circle: Gullfoss and Geysir", "Seljalandsfoss, Skogafoss and the black sand beach", "Blue Lagoon and fly home"], ["Lodge (2 nights)", "Breakfast", "Car with local guide", "Blue Lagoon entry"], ["Air tickets", "Lunch and dinner"]],
+        ["Machu Picchu", "Machu Picchu and Rainbow Mountain", 6, 165000, "adventure", "Cusco, the Sacred Valley, Machu Picchu by train and Rainbow Mountain.", ["Arrive in Cusco and rest", "Sacred Valley and Ollantaytambo", "Train to Aguas Calientes", "Machu Picchu guided tour", "Rainbow Mountain hike", "Fly home"], ["Hotel (5 nights)", "Breakfast", "Train tickets", "Machu Picchu entry and guide"], ["Air tickets", "Travel insurance", "Lunch and dinner"]],
+        ["Dubai", "Dubai City and Desert Break", 4, 88000, "family", "Burj Khalifa, the old souks and an evening desert safari.", ["Arrive in Dubai, marina walk", "Burj Khalifa and Dubai Mall", "Old Dubai, souks and desert safari", "Beach morning and fly home"], ["Hotel (3 nights)", "Breakfast", "Desert safari", "Burj Khalifa tickets"], ["Air tickets", "Visa fee", "Lunch and dinner"]],
     ];
 
     // destination, hotel name, city, stars, amenities, description, room types (name, capacity, price, room count)
@@ -75,10 +79,12 @@ class SeedDemo extends Command
         ["Swiss Alps", "Alpine Lake Lodge", "Interlaken", 4, "Free Wi-Fi, Breakfast, Mountain view, Heating", "A wooden lodge with lake and mountain views.", [["Standard Double", 2, 21000, 3], ["Family Suite", 4, 34000, 2]]],
         ["Maldives", "Blue Lagoon Water Villas", "Maafushi", 5, "Free Wi-Fi, All meals, Private deck, Snorkelling, Spa", "Villas on stilts above a calm lagoon.", [["Beach Villa", 2, 38000, 2], ["Water Villa", 2, 52000, 3]]],
         ["Santorini", "Caldera View Suites", "Oia", 4, "Free Wi-Fi, Breakfast, Plunge pool, Sea view", "Cave style suites facing the sunset.", [["Cave Room", 2, 19000, 2], ["Caldera Suite", 3, 29000, 2]]],
-        ["Cox's Bazar", "Bay Breeze Resort", "Cox's Bazar", 4, "Free Wi-Fi, Pool, Breakfast, Sea view, Parking", "Right next to Kolatoli beach.", [["Sea View Double", 2, 6500, 4], ["Family Room", 4, 9500, 2], ["Budget Room", 2, 3800, 2]]],
+        ["Kyoto", "Gion Garden Ryokan", "Kyoto", 4, "Free Wi-Fi, Breakfast, Onsen bath, Garden view, Tea room", "A quiet wooden ryokan a short walk from Gion.", [["Tatami Double", 2, 18000, 3], ["Family Room", 4, 26000, 2], ["Standard Single", 1, 11000, 2]]],
         ["Everest Region", "Himalayan View Hotel", "Kathmandu", 3, "Free Wi-Fi, Breakfast, Roof terrace, Trek desk", "A friendly base in Thamel for trekkers.", [["Twin Room", 2, 4800, 3], ["Deluxe Room", 3, 7200, 2]]],
         ["Banff", "Pine Peak Lodge", "Banff", 4, "Free Wi-Fi, Hot tub, Breakfast, Fireplace, Parking", "A log lodge at the foot of the Rockies.", [["Queen Room", 2, 24000, 2], ["Loft Suite", 4, 36000, 2]]],
-        ["Sundarbans", "Mangrove Eco Resort", "Mongla", 3, "Breakfast, River view, Boat trips", "Simple eco cottages at the edge of the forest.", [["Eco Cottage", 2, 4200, 3], ["Family Cottage", 4, 6200, 2]]],
+        ["Iceland", "Northern Lights Lodge", "Reykjavik", 4, "Free Wi-Fi, Breakfast, Hot tub, Aurora wake-up call", "Warm cabins with a hot tub and wide night skies.", [["Aurora Cabin", 2, 24000, 3], ["Family Cabin", 4, 38000, 2]]],
+        ["Machu Picchu", "Inca Trail Boutique Hotel", "Cusco", 4, "Free Wi-Fi, Breakfast, Mountain view, Tour desk", "A stone courtyard hotel in the old town of Cusco.", [["Andean Double", 2, 11000, 3], ["Family Suite", 4, 18000, 2]]],
+        ["Dubai", "Marina Sky Hotel", "Dubai Marina", 5, "Free Wi-Fi, Pool, Breakfast, Gym, Skyline view", "A tower hotel above the marina with a rooftop pool.", [["Skyline Room", 2, 22000, 3], ["Executive Suite", 3, 36000, 2]]],
     ];
 
     // month => season
@@ -193,7 +199,7 @@ class SeedDemo extends Command
             WorkTask::create(["title" => "Clean room {$room->number}", "detail" => "Guest left, then mark the room Available on the room board", "kind" => "housekeeping", "assigned_to" => $staff[$i % 2]->id, "due_date" => $today]);
         }
         // - one task from the owner, and some finished work so the numbers are not empty
-        WorkTask::create(["title" => "Update the Cox's Bazar package photos", "detail" => "Ask the hotel for new pictures", "kind" => "general", "assigned_to" => $agents[0]->id, "created_by" => $owner->id, "due_date" => $today->copy()->addDays(3)]);
+        WorkTask::create(["title" => "Update the Kyoto package photos", "detail" => "Ask the hotel for new pictures", "kind" => "general", "assigned_to" => $agents[0]->id, "created_by" => $owner->id, "due_date" => $today->copy()->addDays(3)]);
         foreach ([[$agents[0], "Send trip details to a Bali guest"], [$agents[1], "Call a Maldives customer"], [$staff[0], "Clean room 201"], [$staff[1], "Prepare room 302 for arrival"]] as [$who, $title]) {
             WorkTask::create(["title" => $title, "kind" => "general", "assigned_to" => $who->id, "created_by" => $owner->id, "status" => "Done", "done_at" => now()->subDays(1)]);
         }

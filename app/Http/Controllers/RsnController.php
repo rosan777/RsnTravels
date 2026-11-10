@@ -113,7 +113,7 @@ class RsnController extends Controller
             "hotels" => Hotel::with("roomTypes")->withAvg("reviews", "rating")->withCount("reviews")->where("show_on_site", true)->take(6)->get(),
             "destinations" => $destinations,
             "slides" => $slides,
-            "typed" => ["Bali", "the Maldives", "Santorini", "Cox's Bazar", "the Swiss Alps"],
+            "typed" => ["Bali", "Kyoto", "the Maldives", "Iceland", "Santorini", "Machu Picchu"],
             "quotes" => Review::with("user", "hotel", "tourPackage")->where("rating", ">=", 4)->where("comment", "!=", "")->latest()->take(3)->get(),
             "stats" => [
                 "bookings" => Booking::count(),
@@ -122,6 +122,17 @@ class RsnController extends Controller
                 "reviews" => Review::count(),
             ],
         ]);
+    }
+
+    public function offers(Request $request)
+    {
+        $packages = TourPackage::with("destination")->withAvg("reviews", "rating")->withCount("reviews")->where("show_on_site", true)->orderBy("price")->take(4)->get();
+        return view("offers", ["title" => "Offers - TravelDemo", "packages" => $packages]);
+    }
+
+    public function about(Request $request)
+    {
+        return view("about", ["title" => "About - TravelDemo"]);
     }
 
     public function project_profile(Request $request)

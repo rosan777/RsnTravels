@@ -7,13 +7,13 @@
     @endforeach
     <div class="container py-5">
       <div class="row align-items-center">
-        <div class="col-lg-7">
+        <div class="col-lg-8">
           <div class="section-title text-white-50 mb-2">{{ $t["hero_kicker"] }}</div>
           <h1>{{ $t["hero_title"] }}<br /><span id="typed-word"></span><span class="type-cursor">|</span></h1>
           <p class="lead mb-4">{{ $t["hero_text"] }}</p>
           @include("_search_box")
         </div>
-        <div class="col-lg-5">
+        <div class="col-lg-4">
           <div class="hero-round"><img id="hero-round-img" src="{{ $slides[0][2] }}" alt="Bali" /></div>
         </div>
       </div>
@@ -58,14 +58,19 @@
       </div>
       <a href="{{ route('view_destinations') }}">{{ $t["view_all"] }} &rarr;</a>
     </div>
-    <div class="row">
+    <div class="bento">
       @foreach ($destinations->take(6) as $destination)
-        <div class="col-lg-4 col-md-6 mb-4 reveal">
-          @include("_destination_card", ["wide" => true])
-        </div>
+        <a class="bento-item b{{ $loop->index }} reveal" href="{{ route('view_destination', $destination->id) }}">
+          <img src="{{ $destination->picture_url }}" alt="{{ $destination->name }}" loading="lazy" />
+          <span><b>{{ $destination->name }}</b><small>{{ $destination->country }}</small></span>
+        </a>
       @endforeach
     </div>
+  </div>
 
+  @include("_band", ["photo" => "santorini", "kicker" => $lang == "bn" ? "সীমিত অফার" : "Limited offer", "title" => $lang == "bn" ? "আর্লি বার্ডে ১৫% ছাড়" : "Book early, save 15%", "text" => $lang == "bn" ? "৬০ দিন আগে বুক করুন যেকোনো প্যাকেজ।" : "Reserve any package 60 days ahead and keep more for the trip.", "href" => route("offers"), "cta" => $t["offers"]])
+
+  <div class="container py-5">
     <div class="d-flex justify-content-between align-items-end mb-3 mt-4 reveal">
       <div>
         <div class="section-title">{{ $t["packages"] }}</div>
@@ -74,8 +79,8 @@
       <a href="{{ route('view_packages') }}">{{ $t["view_all"] }} &rarr;</a>
     </div>
     <div class="row">
-      @foreach ($packages as $package)
-        <div class="col-lg-4 col-md-6 mb-4 reveal">
+      @foreach ($packages->take(4) as $package)
+        <div class="col-lg-3 col-md-4 col-6 mb-3 reveal">
           @include("_package_card")
         </div>
       @endforeach
@@ -92,6 +97,11 @@
       </div>
     </div>
 
+  </div>
+
+  @include("_band", ["photo" => "iceland", "right" => true, "kicker" => $lang == "bn" ? "এই মাসের পছন্দ" : "Pick of the month", "title" => $lang == "bn" ? "আইসল্যান্ডের ঝর্না আর নর্দার্ন লাইটস" : "Iceland: waterfalls and northern lights", "text" => $lang == "bn" ? "তিন দিনের গোল্ডেন সার্কেল ট্রিপ গাইড সহ।" : "Three days on the Golden Circle with a local guide.", "href" => route("view_packages"), "cta" => $t["packages"]])
+
+  <div class="container py-5">
     <div class="d-flex justify-content-between align-items-end mb-3 reveal">
       <div>
         <div class="section-title">{{ $t["hotels"] }}</div>
@@ -100,8 +110,8 @@
       <a href="{{ route('view_hotels') }}">{{ $t["view_all"] }} &rarr;</a>
     </div>
     <div class="row">
-      @foreach ($hotels as $hotel)
-        <div class="col-lg-4 col-md-6 mb-4 reveal">
+      @foreach ($hotels->take(4) as $hotel)
+        <div class="col-lg-3 col-md-4 col-6 mb-3 reveal">
           @include("_hotel_card")
         </div>
       @endforeach
