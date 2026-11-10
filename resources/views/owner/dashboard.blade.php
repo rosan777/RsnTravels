@@ -35,9 +35,22 @@
 
     <div class="row">
       <div class="col-lg-7 mb-3"><div class="card"><div class="card-body"><h6>{{ $t["bookings_by_month"] }}</h6><canvas id="monthChart" height="140"></canvas></div></div></div>
-      <div class="col-lg-5 mb-3"><div class="card"><div class="card-body"><h6>{{ $t["by_status"] }}</h6><canvas id="statusChart" height="200"></canvas></div></div></div>
+      <div class="col-lg-5 mb-3"><div class="card"><div class="card-body"><h6>{{ $t["by_status"] }}</h6><div style="height: 250px"><canvas id="statusChart"></canvas></div></div></div></div>
     </div>
+    <div class="card mb-4"><div class="card-body">
+      <div class="d-flex justify-content-between"><h6>{{ $t["workload"] }}</h6><a href="{{ route('owner_team') }}">{{ $t["team"] }} &rarr;</a></div>
+      <div class="row">
+        @foreach ($team as $m)
+          <div class="col-md-6"><div class="member">
+            <div class="avatar {{ $m["type"] }}">{{ strtoupper(substr($m["user"]->name, 0, 1)) }}</div>
+            <div class="flex-fill"><strong>{{ $m["user"]->name }}</strong> <span class="meta">· {{ $t["roles"][$m["type"]][0] }}</span>
+              <div class="meta">{{ $m["open"] }} {{ $t["open_tasks"] }} · {{ $m["done"] }} {{ $t["done_tasks"] }}</div></div>
+          </div></div>
+        @endforeach
+      </div>
+    </div></div>
     <a href="{{ route('owner_bookings') }}" class="btn btn-primary">{{ $t["bookings"] }}</a>
+    <a href="{{ route('owner_team') }}" class="btn btn-outline-primary">{{ $t["team"] }}</a>
     <a href="{{ route('owner_catalog') }}" class="btn btn-outline-primary">{{ $t["catalog"] }}</a>
   </div>
 @endsection
@@ -45,7 +58,7 @@
 @section("scripts")
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
-    new Chart(document.getElementById('monthChart'), { type: 'bar', data: { labels: @json($month_labels), datasets: [{ data: @json($month_values), backgroundColor: '#1fb5a6', borderRadius: 6 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } })
-    new Chart(document.getElementById('statusChart'), { type: 'doughnut', data: { labels: @json($status_counts->keys()), datasets: [{ data: @json($status_counts->values()), backgroundColor: ['#f4a640', '#1fb5a6', '#e5484d', '#3b82f6', '#8a93a6'] }] } })
+    new Chart(document.getElementById('monthChart'), { type: 'bar', data: { labels: @json($month_labels), datasets: [{ data: @json($month_values), backgroundColor: '#0b83b5', borderRadius: 6 }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } })
+    new Chart(document.getElementById('statusChart'), { type: 'doughnut', data: { labels: @json($status_counts->keys()), datasets: [{ data: @json($status_counts->values()), backgroundColor: ['#f6c667', '#0b83b5', '#e5484d', '#138a72', '#8a93a6'] }] }, options: { maintainAspectRatio: false, cutout: '62%' } })
   </script>
 @endsection

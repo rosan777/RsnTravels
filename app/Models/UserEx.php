@@ -11,6 +11,7 @@ class UserEx extends Model
     // - user types
     const USER_TYPES = [
         ["owner", "Agency Owner"],
+        ["agent", "Travel Agent"],
         ["staff", "Hotel Staff"],
         ["customer", "Customer"],
     ];

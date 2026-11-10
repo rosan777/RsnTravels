@@ -33,7 +33,21 @@ Route::prefix("owner")->middleware("restricted_access:owner")->group(function ()
     Route::post("/bookings/{id}/reject", [RsnController::class, "owner_reject_booking"])->name("owner_reject_booking");
     Route::get("/catalog", [RsnController::class, "owner_catalog"])->name("owner_catalog");
     Route::post("/catalog/toggle", [RsnController::class, "owner_toggle_item"])->name("owner_toggle_item");
+    Route::get("/team", [RsnController::class, "owner_team"])->name("owner_team");
+    Route::post("/tasks", [RsnController::class, "owner_create_task"])->name("owner_create_task");
+    Route::post("/tasks/{id}/move", [RsnController::class, "owner_reassign_task"])->name("owner_reassign_task");
 });
+
+// Travel Agent Area
+Route::prefix("agent")->middleware("restricted_access:agent")->group(function () {
+    Route::get("/dashboard", [RsnController::class, "agent_dashboard"])->name("agent_dashboard");
+    Route::get("/bookings", [RsnController::class, "agent_bookings"])->name("agent_bookings");
+    Route::get("/inquiries", [RsnController::class, "agent_inquiries"])->name("agent_inquiries");
+    Route::post("/inquiries/{id}/reply", [RsnController::class, "agent_reply_inquiry"])->name("agent_reply_inquiry");
+});
+
+// Tasks: finished by the person they were given to (or the owner)
+Route::post("/tasks/{id}/done", [RsnController::class, "task_done"])->middleware("restricted_access:agent,staff,owner")->name("task_done");
 
 // Hotel Staff Area
 Route::prefix("staff")->middleware("restricted_access:staff,owner")->group(function () {
@@ -43,6 +57,7 @@ Route::prefix("staff")->middleware("restricted_access:staff,owner")->group(funct
     Route::post("/bookings/{id}/check-out", [RsnController::class, "staff_check_out"])->name("staff_check_out");
     Route::get("/rooms", [RsnController::class, "staff_rooms"])->name("staff_rooms");
     Route::post("/rooms/{id}/status", [RsnController::class, "staff_set_room"])->name("staff_set_room");
+    Route::get("/tasks", [RsnController::class, "staff_tasks"])->name("staff_tasks");
 });
 
 // Customer Area
@@ -57,4 +72,5 @@ Route::prefix("customer")->middleware("restricted_access:customer")->group(funct
     Route::get("/bookings/{id}/invoice", [RsnController::class, "customer_invoice"])->name("customer_invoice");
     Route::post("/bookings/{id}/review", [RsnController::class, "customer_review"])->name("customer_review");
     Route::get("/favorites", [RsnController::class, "customer_favorites"])->name("customer_favorites");
+    Route::match(["get", "post"], "/ask-agent", [RsnController::class, "customer_inquiries"])->name("customer_inquiries");
 });

@@ -16,6 +16,12 @@
         </div>
       @endforeach
     </div>
+    <div class="d-flex justify-content-between"><h5>{{ $t["my_tasks"] }}</h5><a href="{{ route('staff_tasks') }}">{{ $t["view_all"] }} &rarr;</a></div>
+    @forelse ($my_tasks->take(4) as $task)
+      @include("_task_card")
+    @empty
+      <p class="text-muted">{{ $t["no_tasks"] }}</p>
+    @endforelse
     <a href="{{ route('staff_bookings') }}" class="btn btn-primary mb-2">{{ $t["bookings"] }}</a>
     <a href="{{ route('staff_rooms') }}" class="btn btn-outline-primary mb-2">{{ $t["room_board"] }}</a>
     @foreach ([["Arrivals today", $arrivals], ["Departures today", $departures]] as $block)

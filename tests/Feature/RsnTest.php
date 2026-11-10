@@ -82,7 +82,7 @@ class RsnTest extends TestCase
 
     public function test_demo_login_goes_to_each_dashboard()
     {
-        foreach ([["owner", "/owner/dashboard"], ["staff", "/staff/dashboard"], ["customer", "/customer/dashboard"]] as [$type, $url]) {
+        foreach ([["owner", "/owner/dashboard"], ["agent", "/agent/dashboard"], ["staff", "/staff/dashboard"], ["customer", "/customer/dashboard"]] as [$type, $url]) {
             $email = "{$type}@example.com";
             $this->make_user($email, $type);
             $this->post("/login", ["email" => $email, "password" => $email])->assertRedirect($url);
@@ -386,5 +386,89 @@ class RsnTest extends TestCase
                 $this->actingAs($user)->get(route($name))->assertOk();
             }
         }
+    }
+
+    // - the work of each role: tasks are created and given out by themselves
+    public function test_booking_gives_work_to_agent_then_staff()
+    {
+        $room = $this->make_hotel();
+        $customer = $this->make_user("customer@example.com", "customer");
+        $owner = $this->make_user("owner@example.com", "owner");
+        $agent = $this->make_user("agent@example.com", "agent");
+        $staff = $this->make_user("staff@example.com", "staff");
+        $in = Carbon::today()->addDays(10)->toDateString();
+        $out = Carbon::today()->addDays(12)->toDateString();
+
+        $this->cart_room($customer, $room, $in, $out);
+        $this->actingAs($customer)->post(route("customer_checkout"), ["payment_method" => "bKash"]);
+        $booking = Booking::first();
+
+        // checkout: the agent gets a call task
+        $call = \App\Models\WorkTask::where("kind", "follow_up")->first();
+        $this->assertSame($agent->id, $call->assigned_to);
+        $this->actingAs($agent)->get(route("agent_dashboard"))->assertOk()->assertSee("Call customer@example.com");
+
+        // approval: the staff member gets an arrival task
+        $this->actingAs($owner)->post(route("owner_approve_booking", $booking->id));
+        $prep = \App\Models\WorkTask::where("kind", "arrival_prep")->first();
+        $this->assertSame($staff->id, $prep->assigned_to);
+
+        // only the person it belongs to can finish a task, the owner can finish any
+        $this->actingAs($agent)->post(route("task_done", $prep->id))->assertSessionHas("error");
+        $this->assertSame("Open", $prep->fresh()->status);
+        $this->actingAs($staff)->post(route("task_done", $prep->id));
+        $this->assertSame("Done", $prep->fresh()->status);
+
+        // check-out: a housekeeping task appears and ends when the room is set Available
+        $this->actingAs($staff)->post(route("staff_check_in", $booking->id));
+        $this->actingAs($staff)->post(route("staff_check_out", $booking->id));
+        $this->assertSame(1, \App\Models\WorkTask::where("kind", "housekeeping")->where("status", "Open")->count());
+        $this->actingAs($staff)->post(route("staff_set_room", $room->id), ["status" => "Available"]);
+        $this->assertSame(0, \App\Models\WorkTask::where("kind", "housekeeping")->where("status", "Open")->count());
+    }
+
+    public function test_rejecting_a_booking_closes_its_tasks()
+    {
+        $room = $this->make_hotel();
+        $customer = $this->make_user("customer@example.com", "customer");
+        $owner = $this->make_user("owner@example.com", "owner");
+        $this->make_user("agent@example.com", "agent");
+        $in = Carbon::today()->addDays(10)->toDateString();
+        $this->cart_room($customer, $room, $in, Carbon::today()->addDays(12)->toDateString());
+        $this->actingAs($customer)->post(route("customer_checkout"), ["payment_method" => "Card"]);
+        $this->assertSame(1, \App\Models\WorkTask::where("status", "Open")->count());
+        $this->actingAs($owner)->post(route("owner_reject_booking", Booking::first()->id));
+        $this->assertSame(0, \App\Models\WorkTask::where("status", "Open")->count());
+    }
+
+    public function test_owner_gives_and_moves_tasks()
+    {
+        $owner = $this->make_user("owner@example.com", "owner");
+        $a1 = $this->make_user("agent@example.com", "agent");
+        $s1 = $this->make_user("staff@example.com", "staff");
+        $customer = $this->make_user("customer@example.com", "customer");
+        $this->actingAs($owner)->post(route("owner_create_task"), ["title" => "Order towels", "assigned_to" => $s1->id])->assertSessionHas("success");
+        $task = \App\Models\WorkTask::first();
+        $this->assertSame($s1->id, $task->assigned_to);
+        $this->actingAs($owner)->post(route("owner_reassign_task", $task->id), ["assigned_to" => $a1->id]);
+        $this->assertSame($a1->id, $task->fresh()->assigned_to);
+        // a customer cannot be given a task
+        $this->actingAs($owner)->post(route("owner_create_task"), ["title" => "x", "assigned_to" => $customer->id])->assertSessionHas("error");
+        $this->actingAs($owner)->get(route("owner_team"))->assertOk()->assertSee("Order towels");
+        $this->actingAs($a1)->get(route("owner_team"))->assertStatus(403);
+    }
+
+    public function test_customer_asks_and_agent_replies()
+    {
+        $customer = $this->make_user("customer@example.com", "customer");
+        $agent = $this->make_user("agent@example.com", "agent");
+        $this->actingAs($customer)->post(route("customer_inquiries"), ["subject" => "Visa?", "message" => "Do I need a visa for Bali?"])->assertRedirect(route("customer_inquiries"));
+        $inquiry = \App\Models\Inquiry::first();
+        $this->assertSame($agent->id, $inquiry->agent_id);
+        $this->actingAs($customer)->post(route("customer_inquiries"), ["subject" => "", "message" => ""])->assertSessionHas("error");
+        $this->actingAs($agent)->get(route("agent_inquiries"))->assertOk()->assertSee("Visa?");
+        $this->actingAs($agent)->post(route("agent_reply_inquiry", $inquiry->id), ["reply" => "Yes, on arrival."])->assertSessionHas("success");
+        $this->actingAs($customer)->get(route("customer_inquiries"))->assertSee("Yes, on arrival.");
+        $this->actingAs($customer)->get(route("agent_inquiries"))->assertStatus(403);
     }
 }

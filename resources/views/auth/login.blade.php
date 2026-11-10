@@ -20,18 +20,15 @@
         </form>
       </div>
       <div class="col-md-6 mt-4 mt-md-0">
-        <div class="card">
-          <div class="card-header">
-            <h3>{{ $t["demo_logins"] }}</h3>
-          </div>
-          <div class="card-body">
-            <p class="text-muted small">{{ $t["demo_note"] }}</p>
-            @foreach ([["owner@example.com", "Agency Owner"], ["staff@example.com", "Hotel Staff"], ["customer@example.com", "Customer"]] as $demo)
-              <button type="button" class="btn btn-info btn-block text-left demo-login" data-email="{{ $demo[0] }}">
-                <strong>{{ $demo[1] }}</strong> <span class="float-right small">{{ $demo[0] }}</span>
-              </button>
-            @endforeach
-          </div>
+        <h5 class="mb-3">{{ $t["demo_roles_title"] }}</h5>
+        <p class="text-muted small">{{ $t["demo_note"] }}</p>
+        <div class="role-cards">
+          @foreach ([["owner", "owner@example.com"], ["agent", "agent@example.com"], ["staff", "staff@example.com"], ["customer", "customer@example.com"]] as $demo)
+            <button type="button" class="rc {{ $demo[0] }} demo-login" data-email="{{ $demo[1] }}">
+              <span class="rt">{{ $t["roles"][$demo[0]][0] }}</span> <span class="rs">· {{ $t["roles"][$demo[0]][1] }}</span>
+              <ul>@foreach ($t["roles"][$demo[0]][2] as $job)<li>{{ $job }}</li>@endforeach</ul>
+            </button>
+          @endforeach
         </div>
       </div>
     </div>

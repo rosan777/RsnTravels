@@ -19,5 +19,6 @@
     <a href="{{ route('view_packages') }}" class="btn btn-outline-primary">{{ $t["packages"] }}</a>
     <a href="{{ route('customer_cart') }}" class="btn btn-outline-primary"><i class="fas fa-shopping-cart"></i> {{ $t["cart"] }}</a>
     <a href="{{ route('customer_bookings') }}" class="btn btn-outline-primary">{{ $t["my_bookings"] }}</a>
+    <a href="{{ route('customer_inquiries') }}" class="btn btn-outline-primary"><i class="fas fa-comments"></i> {{ $t["ask_agent"] }}</a>
   </div>
 @endsection

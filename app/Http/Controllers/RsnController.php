@@ -6,12 +6,14 @@ use App\Models\Booking;
 use App\Models\Destination;
 use App\Models\Favorite;
 use App\Models\Hotel;
+use App\Models\Inquiry;
 use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomType;
 use App\Models\TourPackage;
 use App\Models\User;
 use App\Models\UserEx;
+use App\Models\WorkTask;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -65,6 +67,39 @@ class RsnController extends Controller
     private function free_rooms($room_type, $check_in, $check_out)
     {
         return $room_type->rooms->filter(fn ($room) => $room->isFree($check_in, $check_out))->values();
+    }
+
+    // - the team member of one role who has the fewest open tasks
+    private function least_busy($user_type)
+    {
+        $ids = UserEx::where("user_type", $user_type)->pluck("user_id");
+        if ($ids->isEmpty()) {
+            return null;
+        }
+        $open = WorkTask::whereIn("assigned_to", $ids)->where("status", "Open")
+            ->select("assigned_to", DB::raw("count(*) as n"))->groupBy("assigned_to")->pluck("n", "assigned_to");
+        return User::whereIn("id", $ids)->orderBy("id")->get()->sortBy(fn ($u) => $open[$u->id] ?? 0)->first();
+    }
+
+    // - creates a task and gives it to the least busy member of the role (or to a chosen person)
+    private function give_task($user_type, $kind, $title, $detail = null, $booking = null, $due = null, $assignee = null, $creator = null)
+    {
+        $assignee = $assignee ?: $this->least_busy($user_type);
+        return WorkTask::create([
+            "title" => $title,
+            "detail" => $detail,
+            "kind" => $kind,
+            "booking_id" => $booking ? $booking->id : null,
+            "assigned_to" => $assignee ? $assignee->id : null,
+            "created_by" => $creator,
+            "due_date" => $due,
+        ]);
+    }
+
+    // - closes the open tasks of a booking (cancelled or rejected)
+    private function close_booking_tasks($booking)
+    {
+        WorkTask::where("booking_id", $booking->id)->where("status", "Open")->update(["status" => "Done", "done_at" => now()]);
     }
 
     // Public Area
@@ -281,6 +316,8 @@ class RsnController extends Controller
     {
         if ($userEx->user_type == "owner") {
             return redirect()->route("owner_dashboard");
+        } elseif ($userEx->user_type == "agent") {
+            return redirect()->route("agent_dashboard");
         } elseif ($userEx->user_type == "staff") {
             return redirect()->route("staff_dashboard");
         }
@@ -398,6 +435,7 @@ class RsnController extends Controller
             "month_labels" => array_map(fn ($m) => Carbon::parse($m . "-01")->format("M"), array_keys($months)),
             "month_values" => array_values($months),
             "status_counts" => Booking::select("status", DB::raw("count(*) as n"))->groupBy("status")->pluck("n", "status"),
+            "team" => $this->team_workload(),
         ]);
     }
 
@@ -419,6 +457,7 @@ class RsnController extends Controller
             "pending_count" => Booking::where("booking_type", "Hotel")->where("status", "Pending")->count(),
             "occupied_count" => Room::where("status", "Occupied")->count(),
             "rooms_count" => Room::count(),
+            "my_tasks" => $this->my_open_tasks(),
         ]);
     }
 
@@ -599,7 +638,7 @@ class RsnController extends Controller
         $ids = [];
         DB::transaction(function () use ($lines, $rooms, $method, $paid, &$ids) {
             foreach ($lines as $line) {
-                $ids[] = Booking::create([
+                $booking = Booking::create([
                     "user_id" => Auth::id(),
                     "booking_type" => $line["type"] == "hotel" ? "Hotel" : "Package",
                     "room_id" => $line["type"] == "hotel" ? $rooms[$line["key"]]->id : null,
@@ -611,7 +650,10 @@ class RsnController extends Controller
                     "status" => "Pending",
                     "payment_method" => $method,
                     "payment_status" => $paid ? "PAID" : "UNPAID",
-                ])->id;
+                ]);
+                $ids[] = $booking->id;
+                // - the agents call every new customer (the task goes to the least busy agent)
+                $this->give_task("agent", "follow_up", "Call " . Auth::user()->name . " about booking #{$booking->id}", $booking->title() . " · " . $booking->check_in->format("d M") . " - " . $booking->check_out->format("d M Y"), $booking, Carbon::today()->addDay());
             }
         });
         $request->session()->forget("cart");
@@ -644,6 +686,7 @@ class RsnController extends Controller
             $booking->payment_status = "UNPAID";
         }
         $booking->save();
+        $this->close_booking_tasks($booking);
         return back()->with("success", "Booking cancelled" . ($booking->payment_method != "PayAtHotel" ? ". Your payment will be refunded (demo)." : ""));
     }
 
@@ -699,7 +742,13 @@ class RsnController extends Controller
         }
         $booking->status = "Confirmed";
         $booking->save();
-        return back()->with("success", "Booking #{$booking->id} approved. Hotel staff can now see it.");
+        // - hotel bookings: staff prepare the room; package bookings: an agent sends the trip details
+        if ($booking->booking_type == "Hotel") {
+            $this->give_task("staff", "arrival_prep", "Prepare room {$booking->room->number} for " . $booking->user->name, $booking->title() . " · arrives " . $booking->check_in->format("d M Y"), $booking, $booking->check_in);
+        } else {
+            $this->give_task("agent", "follow_up", "Send trip details to " . $booking->user->name, $booking->title() . " · starts " . $booking->check_in->format("d M Y"), $booking, $booking->check_in->copy()->subDays(2));
+        }
+        return back()->with("success", "Booking #{$booking->id} approved and a task was given to the team.");
     }
 
     public function owner_reject_booking(Request $request, $id)
@@ -713,6 +762,7 @@ class RsnController extends Controller
             $booking->payment_status = "UNPAID";
         }
         $booking->save();
+        $this->close_booking_tasks($booking);
         return back()->with("success", "Booking #{$booking->id} rejected" . ($booking->payment_method != "PayAtHotel" ? " and the payment refunded (demo)" : ""));
     }
 
@@ -773,6 +823,7 @@ class RsnController extends Controller
         }
         $booking->save();
         $booking->room->update(["status" => "Cleaning"]);
+        $this->give_task("staff", "housekeeping", "Clean room {$booking->room->number}", $booking->title() . " · guest left today", $booking, Carbon::today(), $request->userEx->user_type == "staff" ? Auth::user() : null);
         return back()->with("success", "Checked out. Room {$booking->room->number} is marked for cleaning.");
     }
 
@@ -790,6 +841,152 @@ class RsnController extends Controller
         }
         $room->status = $status;
         $room->save();
+        // - a clean room finishes its housekeeping task
+        if ($status == "Available") {
+            $ids = Booking::where("room_id", $room->id)->pluck("id");
+            WorkTask::where("kind", "housekeeping")->where("status", "Open")->whereIn("booking_id", $ids)->update(["status" => "Done", "done_at" => now()]);
+        }
         return back()->with("success", "Room {$room->number} is now {$status}");
+    }
+
+    // Team: tasks, workload and questions
+    private function my_open_tasks()
+    {
+        return WorkTask::with("booking")->where("assigned_to", Auth::id())->where("status", "Open")->orderByRaw("due_date is null")->orderBy("due_date")->orderBy("id")->get();
+    }
+
+    // - one row per agent and staff member: open and done tasks
+    private function team_workload()
+    {
+        $members = UserEx::with("user")->whereIn("user_type", ["agent", "staff"])->get();
+        $rows = [];
+        foreach ($members as $m) {
+            $rows[] = [
+                "user" => $m->user,
+                "type" => $m->user_type,
+                "open" => WorkTask::where("assigned_to", $m->user_id)->where("status", "Open")->count(),
+                "done" => WorkTask::where("assigned_to", $m->user_id)->where("status", "Done")->count(),
+            ];
+        }
+        return $rows;
+    }
+
+    // - agent, staff or owner finishes a task (only their own, the owner can finish any)
+    public function task_done(Request $request, $id)
+    {
+        $task = WorkTask::find($id);
+        if (!$task || $task->status != "Open") {
+            return back()->with("error", "This task is already finished");
+        }
+        if ($request->userEx->user_type != "owner" && $task->assigned_to != Auth::id()) {
+            return back()->with("error", "This task belongs to someone else");
+        }
+        $task->update(["status" => "Done", "done_at" => now()]);
+        return back()->with("success", "Task done: " . $task->title);
+    }
+
+    public function owner_team(Request $request)
+    {
+        $status = $request->input("status", "Open");
+        $query = WorkTask::with("assignee", "booking")->latest("id");
+        if (in_array($status, ["Open", "Done"])) {
+            $query->where("status", $status);
+        }
+        return view("owner.team", [
+            "team" => $this->team_workload(),
+            "tasks" => $query->take(60)->get(),
+            "status" => $status,
+            "members" => User::whereIn("id", UserEx::whereIn("user_type", ["agent", "staff"])->pluck("user_id"))->orderBy("name")->get(),
+        ]);
+    }
+
+    public function owner_create_task(Request $request)
+    {
+        $title = trim((string) $request->input("title"));
+        $assignee = User::find($request->input("assigned_to"));
+        $ex = $assignee ? UserEx::where("user_id", $assignee->id)->first() : null;
+        if ($title == "" || !$ex || !in_array($ex->user_type, ["agent", "staff"])) {
+            return back()->with("error", "Write the task and choose an agent or a staff member");
+        }
+        $due = $request->input("due_date") ?: null;
+        $this->give_task($ex->user_type, "general", mb_substr($title, 0, 160), trim((string) $request->input("detail")) ?: null, null, $due, $assignee, Auth::id());
+        return back()->with("success", "Task given to " . $assignee->name);
+    }
+
+    public function owner_reassign_task(Request $request, $id)
+    {
+        $task = WorkTask::find($id);
+        $assignee = User::find($request->input("assigned_to"));
+        $ex = $assignee ? UserEx::where("user_id", $assignee->id)->first() : null;
+        if (!$task || !$ex || !in_array($ex->user_type, ["agent", "staff"])) {
+            return back()->with("error", "Could not move the task");
+        }
+        $task->update(["assigned_to" => $assignee->id]);
+        return back()->with("success", "Task moved to " . $assignee->name);
+    }
+
+    // Travel Agent Area
+    public function agent_dashboard(Request $request)
+    {
+        $mine = Auth::id();
+        return view("agent.dashboard", [
+            "my_tasks" => $this->my_open_tasks(),
+            "done_count" => WorkTask::where("assigned_to", $mine)->where("status", "Done")->count(),
+            "new_questions" => Inquiry::where("status", "New")->where(fn ($q) => $q->whereNull("agent_id")->orWhere("agent_id", $mine))->count(),
+            "waiting_owner" => Booking::where("status", "Pending")->count(),
+            "latest_questions" => Inquiry::with("user")->where("status", "New")->where(fn ($q) => $q->whereNull("agent_id")->orWhere("agent_id", $mine))->latest("id")->take(4)->get(),
+        ]);
+    }
+
+    public function agent_bookings(Request $request)
+    {
+        return view("agent.bookings", [
+            "bookings" => Booking::with("user.userEx", "room.roomType.hotel", "tourPackage")->whereIn("status", ["Pending", "Confirmed"])->orderBy("check_in")->take(40)->get(),
+        ]);
+    }
+
+    public function agent_inquiries(Request $request)
+    {
+        $mine = Auth::id();
+        return view("agent.inquiries", [
+            "new" => Inquiry::with("user")->where("status", "New")->where(fn ($q) => $q->whereNull("agent_id")->orWhere("agent_id", $mine))->orderBy("id")->get(),
+            "answered" => Inquiry::with("user")->where("status", "Answered")->where("agent_id", $mine)->latest("id")->take(15)->get(),
+        ]);
+    }
+
+    public function agent_reply_inquiry(Request $request, $id)
+    {
+        $inquiry = Inquiry::find($id);
+        $reply = trim((string) $request->input("reply"));
+        if (!$inquiry || $inquiry->status != "New" || $reply == "") {
+            return back()->with("error", "Write a reply first");
+        }
+        $inquiry->update(["reply" => mb_substr($reply, 0, 2000), "agent_id" => Auth::id(), "status" => "Answered"]);
+        return back()->with("success", "Reply sent to " . $inquiry->user->name);
+    }
+
+    // Hotel Staff: tasks
+    public function staff_tasks(Request $request)
+    {
+        return view("staff.tasks", [
+            "my_tasks" => $this->my_open_tasks(),
+            "done" => WorkTask::where("assigned_to", Auth::id())->where("status", "Done")->latest("done_at")->take(10)->get(),
+        ]);
+    }
+
+    // Customer: ask an agent
+    public function customer_inquiries(Request $request)
+    {
+        if ($request->isMethod("post")) {
+            $subject = trim((string) $request->input("subject"));
+            $message = trim((string) $request->input("message"));
+            if ($subject == "" || $message == "") {
+                return back()->withInput()->with("error", "Please write a subject and your question");
+            }
+            $agent = $this->least_busy("agent");
+            Inquiry::create(["user_id" => Auth::id(), "agent_id" => $agent ? $agent->id : null, "subject" => mb_substr($subject, 0, 160), "message" => mb_substr($message, 0, 2000)]);
+            return redirect()->route("customer_inquiries")->with("success", "Your question was sent to our travel agents.");
+        }
+        return view("customer.inquiries", ["inquiries" => Inquiry::with("agent")->where("user_id", Auth::id())->latest("id")->get()]);
     }
 }

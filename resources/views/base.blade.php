@@ -9,7 +9,7 @@
     @include("_styles")
   </head>
 
-  <body>
+  <body class="role-{{ $userEx ? $userEx->user_type : 'guest' }}">
     <nav class="navbar navbar-expand-lg sticky-top navbar-dark bg-primary justify-content-between">
       <a class="navbar-brand" href="{{ route('index') }}"><i class="fas fa-plane-departure"></i>TravelDemo</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
@@ -21,11 +21,18 @@
             </li>
             @if ($userEx->user_type == "owner")
               <li class="nav-item"><a class="nav-link" href="{{ route('owner_bookings') }}">{{ $t["bookings"] }}@if ($pendingApprovals ?? 0) <span class="badge badge-warning">{{ $pendingApprovals }}</span>@endif</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ route('owner_team') }}">{{ $t["team"] }}</a></li>
+            @elseif ($userEx->user_type == "agent")
+              <li class="nav-item"><a class="nav-link" href="{{ route('agent_dashboard') }}">{{ $t["my_tasks"] }}</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ route('agent_inquiries') }}">{{ $t["inquiries"] }}</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ route('agent_bookings') }}">{{ $t["bookings"] }}</a></li>
             @elseif ($userEx->user_type == "staff")
+              <li class="nav-item"><a class="nav-link" href="{{ route('staff_tasks') }}">{{ $t["my_tasks"] }}</a></li>
               <li class="nav-item"><a class="nav-link" href="{{ route('staff_bookings') }}">{{ $t["bookings"] }}</a></li>
               <li class="nav-item"><a class="nav-link" href="{{ route('staff_rooms') }}">{{ $t["room_board"] }}</a></li>
             @else
               <li class="nav-item"><a class="nav-link" href="{{ route('customer_bookings') }}">{{ $t["my_bookings"] }}</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ route('customer_inquiries') }}">{{ $t["ask_agent"] }}</a></li>
             @endif
           @endif
           <li class="nav-item"><a class="nav-link" href="{{ route('view_destinations') }}">{{ $t["destinations"] }}</a></li>

@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId("user_id")->unique()->constrained("users")->cascadeOnDelete();
             // - phone
             $table->string("phone", 20)->nullable();
-            // - user type: owner, staff, customer
+            // - user type: owner, agent, staff, customer
             $table->string("user_type", 20)->default("customer");
             $table->timestamps();
         });

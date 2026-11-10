@@ -6,6 +6,7 @@ use App\Support\Photo;
 use App\Models\Booking;
 use App\Models\Destination;
 use App\Models\Hotel;
+use App\Models\Inquiry;
 use App\Models\Review;
 use App\Models\Room;
 use App\Models\RoomType;
@@ -13,6 +14,7 @@ use App\Models\Season;
 use App\Models\TourPackage;
 use App\Models\User;
 use App\Models\UserEx;
+use App\Models\WorkTask;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +30,10 @@ class SeedDemo extends Command
     // email, user type, name, phone; the password is the same as the email (matches the login page buttons)
     const DEMO_USERS = [
         ["owner@example.com", "owner", "Agency Owner", "01700000001"],
-        ["staff@example.com", "staff", "Hotel Staff", "01700000002"],
+        ["agent@example.com", "agent", "Rina Das", "01700000004"],
+        ["agent2@example.com", "agent", "Karim Uddin", "01700000005"],
+        ["staff@example.com", "staff", "Hasan Front Desk", "01700000002"],
+        ["staff2@example.com", "staff", "Mim Housekeeping", "01700000006"],
         ["customer@example.com", "customer", "Demo Customer", "01700000003"],
     ];
 
@@ -158,8 +163,42 @@ class SeedDemo extends Command
             DB::transaction(fn () => $this->seed_bookings($guests));
         }
 
+        $this->seed_team();
+
         $this->info("Demo data ready: " . Booking::count() . " bookings, " . Room::count() . " rooms.");
         return 0;
+    }
+
+    // - open work for the agents and the hotel staff, and one customer question (only when there is none yet)
+    private function seed_team()
+    {
+        if (WorkTask::count() > 0) {
+            return;
+        }
+        $owner = User::where("email", "owner@example.com")->first();
+        $agents = User::whereIn("email", ["agent@example.com", "agent2@example.com"])->orderBy("id")->get();
+        $staff = User::whereIn("email", ["staff@example.com", "staff2@example.com"])->orderBy("id")->get();
+        $today = Carbon::today();
+
+        // - every pending booking has a call task for an agent
+        foreach (Booking::with("user")->where("status", "Pending")->orderBy("check_in")->take(8)->get() as $i => $b) {
+            WorkTask::create(["title" => "Call {$b->user->name} about booking #{$b->id}", "detail" => $b->title() . " · " . $b->check_in->format("d M") . " - " . $b->check_out->format("d M Y"), "kind" => "follow_up", "booking_id" => $b->id, "assigned_to" => $agents[$i % 2]->id, "due_date" => $today->copy()->addDay()]);
+        }
+        // - coming arrivals: staff prepare the room
+        foreach (Booking::with("user", "room")->where("booking_type", "Hotel")->where("status", "Confirmed")->whereDate("check_in", ">=", $today)->orderBy("check_in")->take(6)->get() as $i => $b) {
+            WorkTask::create(["title" => "Prepare room {$b->room->number} for {$b->user->name}", "detail" => $b->title() . " · arrives " . $b->check_in->format("d M Y"), "kind" => "arrival_prep", "booking_id" => $b->id, "assigned_to" => $staff[$i % 2]->id, "due_date" => $b->check_in]);
+        }
+        // - rooms waiting for cleaning
+        foreach (Room::where("status", "Cleaning")->take(3)->get() as $i => $room) {
+            WorkTask::create(["title" => "Clean room {$room->number}", "detail" => "Guest left, then mark the room Available on the room board", "kind" => "housekeeping", "assigned_to" => $staff[$i % 2]->id, "due_date" => $today]);
+        }
+        // - one task from the owner, and some finished work so the numbers are not empty
+        WorkTask::create(["title" => "Update the Cox's Bazar package photos", "detail" => "Ask the hotel for new pictures", "kind" => "general", "assigned_to" => $agents[0]->id, "created_by" => $owner->id, "due_date" => $today->copy()->addDays(3)]);
+        foreach ([[$agents[0], "Send trip details to a Bali guest"], [$agents[1], "Call a Maldives customer"], [$staff[0], "Clean room 201"], [$staff[1], "Prepare room 302 for arrival"]] as [$who, $title]) {
+            WorkTask::create(["title" => $title, "kind" => "general", "assigned_to" => $who->id, "created_by" => $owner->id, "status" => "Done", "done_at" => now()->subDays(1)]);
+        }
+        $customer = User::where("email", "customer@example.com")->first();
+        Inquiry::create(["user_id" => $customer->id, "agent_id" => $agents[0]->id, "subject" => "Is Bali good in November?", "message" => "We want a 5 day trip with a beach and temples. Which package would you pick?"]);
     }
 
     // - 6 months back and 3 months ahead, busier in peak months, so the forecast has a story
