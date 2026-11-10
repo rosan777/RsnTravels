@@ -176,7 +176,7 @@
               <li>{{ $li }}</li>
             @endforeach
           </ul>
-          <a href="https://oanro.com/contact" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-lg mt-2">{{ $pick("Contact us", "যোগাযোগ করুন") }}</a>
+          <a href="https://oanro.com/contact" target="_blank" rel="noopener noreferrer" class="btn btn-contact btn-lg mt-2">{{ $pick("Contact us", "যোগাযোগ করুন") }}</a>
           <p class="small text-muted mt-2 mb-0">{{ $pick("Opens the OANRO contact page in a new tab.", "OANRO-র যোগাযোগ পেজ নতুন ট্যাবে খুলবে।") }}</p>
         </div>
       </div>

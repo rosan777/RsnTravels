@@ -394,3 +394,8 @@
   .subscribe .form-control { min-width: 260px; border: 0; }
   .sub-ok { font-weight: 700; }
 </style>
+<style>
+  /* Contact us button always uses the site's orange, whatever the logged-in role */
+  body .btn-contact { background: #ee7b4d !important; border-color: #ee7b4d !important; color: #fff !important; font-weight: 600; }
+  body .btn-contact:hover, body .btn-contact:focus { background: #e0663a !important; border-color: #e0663a !important; color: #fff !important; }
+</style>
