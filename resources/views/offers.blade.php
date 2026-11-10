@@ -26,4 +26,5 @@
   </div>
 
   @include("_band", ["photo" => "iceland", "kicker" => $bn ? "এই মাসের পছন্দ" : "Pick of the month", "title" => $bn ? "আইসল্যান্ডে ঝর্না আর নর্দার্ন লাইটস" : "Waterfalls and northern lights in Iceland", "text" => $bn ? "তিন দিনের গোল্ডেন সার্কেল ট্রিপ, গাইড সহ।" : "A three day Golden Circle trip with a local guide.", "href" => route("view_packages"), "cta" => $t["view_all"]])
+  @include("_subscribe")
 @endsection

@@ -166,6 +166,7 @@
       @endforeach
     </div>
   </div>
+  @include("_subscribe")
 @endsection
 
 @section("scripts")

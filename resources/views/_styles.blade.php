@@ -383,4 +383,14 @@
   .navbar .nav-link:hover, .navbar .nav-link.active { color: #fff !important; }
   .search-box .btn-cta { color: #fff !important; }
   .tech-pill i { color: var(--cta); }
+
+  /* shaded sections, calm photo grading, subscribe band */
+  .shade { background: linear-gradient(180deg, #fff, #f4f7fa 60%, #fff); }
+  .photo-frame img, .bento-item img, .gallery-main img { filter: saturate(1.06) contrast(1.03); }
+  .subscribe { position: relative; text-align: center; color: #fff; padding: clamp(48px, 9vw, 84px) 0; background-size: cover; background-position: center; }
+  .subscribe::before { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(20,26,42,.72), rgba(20,26,42,.55)); }
+  .subscribe .container { position: relative; }
+  .subscribe-in h2 { font-size: clamp(1.5rem, 4vw, 2.2rem); margin-bottom: 1rem; }
+  .subscribe .form-control { min-width: 260px; border: 0; }
+  .sub-ok { font-weight: 700; }
 </style>

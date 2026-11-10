@@ -19,4 +19,5 @@
   </div>
 
   @include("_band", ["photo" => "machu", "right" => true, "kicker" => $bn ? "ডেমো থেকে বাস্তবে" : "From demo to real", "title" => $bn ? "আপনার ট্রাভেল ব্যবসার জন্য তৈরি" : "Ready for your travel business", "text" => $bn ? "আপনার নাম, দাম আর ছবি দিয়ে সাজিয়ে দিই।" : "We can fit it with your name, prices and photos.", "href" => "https://oanro.com/contact", "cta" => $bn ? "যোগাযোগ করুন" : "Contact us"])
+  @include("_subscribe")
 @endsection
