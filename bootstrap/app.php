@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: "/up",
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // - Vercel sits in front of the app, so trust its https headers
+        $middleware->trustProxies(at: "*");
         $middleware->web(append: [UserSpecificMiddleware::class]);
         $middleware->alias([
             "restricted_access" => RestrictedAccess::class,

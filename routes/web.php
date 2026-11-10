@@ -13,6 +13,7 @@ Route::get("/packages/{id}", [RsnController::class, "view_package"])->name("view
 Route::get("/hotels", [RsnController::class, "view_hotels"])->name("view_hotels");
 Route::get("/hotels/{id}", [RsnController::class, "view_hotel"])->name("view_hotel");
 Route::get("/search-rooms", [RsnController::class, "search_rooms"])->name("search_rooms");
+Route::get("/setup-demo/{token}", [RsnController::class, "setup_demo"])->name("setup_demo");
 
 // Auth
 Route::middleware("not_logged_in")->group(function () {

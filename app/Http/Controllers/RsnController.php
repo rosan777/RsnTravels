@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\UserEx;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -238,6 +239,19 @@ class RsnController extends Controller
             "check_out" => $check_out,
             "guests" => $guests,
         ]);
+    }
+
+    // - live server only: runs migrate + seed:demo once after a deploy (needs SETUP_TOKEN in env)
+    public function setup_demo(Request $request, $token)
+    {
+        $secret = (string) env("SETUP_TOKEN", "");
+        if ($secret == "" || !hash_equals($secret, (string) $token)) {
+            return $this->not_found();
+        }
+        Artisan::call("migrate", ["--force" => true]);
+        $output = Artisan::output();
+        Artisan::call("seed:demo");
+        return response($output . Artisan::output(), 200)->header("Content-Type", "text/plain");
     }
 
     public function dashboard(Request $request)

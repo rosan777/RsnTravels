@@ -216,6 +216,11 @@ class RsnTest extends TestCase
         $this->get("/")->assertSee("&copy; 2024 OANRO. All rights reserved.", false)->assertSee("Basic Laravel Project - Demo");
     }
 
+    public function test_setup_route_is_closed_without_token()
+    {
+        $this->get("/setup-demo/anything")->assertStatus(404);
+    }
+
     public function test_seed_demo_twice_does_not_duplicate()
     {
         $this->assertEquals(0, Artisan::call("seed:demo"));

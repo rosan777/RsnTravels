@@ -1,0 +1,8 @@
+/vendor
+/node_modules
+/tests
+.env
+composer.local.json
+composer.local.lock
+database/*.sqlite
+storage/logs/*.log

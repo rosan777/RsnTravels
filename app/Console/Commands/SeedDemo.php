@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\UserEx;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 // php artisan seed:demo  (safe to run again: nothing is duplicated)
@@ -150,7 +151,8 @@ class SeedDemo extends Command
         }
 
         if (Booking::count() == 0) {
-            $this->seed_bookings($guests);
+            // - one transaction keeps it quick on the live database
+            DB::transaction(fn () => $this->seed_bookings($guests));
         }
 
         $this->info("Demo data ready: " . Booking::count() . " bookings, " . Room::count() . " rooms.");
