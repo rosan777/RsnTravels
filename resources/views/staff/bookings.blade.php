@@ -6,7 +6,7 @@
   <div class="container">
     <div class="alert alert-info"><i class="fas fa-info-circle"></i> {{ $t["staff_note"] }} ({{ $waiting }} {{ $t["waiting"] }})</div>
     <h4>{{ $t["arrivals"] }}</h4>
-    <table class="table">
+    <div class="table-responsive"><table class="table">
       <thead><tr><th>ID</th><th>{{ $t["guest"] }}</th><th>{{ $t["hotel"] }} / Room</th><th>{{ $t["dates"] }}</th><th></th></tr></thead>
       <tbody>
         @forelse ($arrivals as $b)
@@ -19,9 +19,9 @@
           <tr><td colspan="5" class="text-muted">{{ $t["none"] }}</td></tr>
         @endforelse
       </tbody>
-    </table>
+    </table></div>
     <h4 class="mt-4">{{ $t["in_house"] }}</h4>
-    <table class="table">
+    <div class="table-responsive"><table class="table">
       <thead><tr><th>ID</th><th>{{ $t["guest"] }}</th><th>{{ $t["hotel"] }} / Room</th><th>{{ $t["dates"] }}</th><th></th></tr></thead>
       <tbody>
         @forelse ($in_house as $b)
@@ -34,6 +34,6 @@
           <tr><td colspan="5" class="text-muted">{{ $t["none"] }}</td></tr>
         @endforelse
       </tbody>
-    </table>
+    </table></div>
   </div>
 @endsection

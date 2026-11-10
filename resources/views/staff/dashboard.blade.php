@@ -29,7 +29,7 @@
       @if ($block[1]->isEmpty())
         <p class="text-muted">None today.</p>
       @else
-        <table class="table">
+        <div class="table-responsive"><table class="table">
           <thead>
             <tr>
               <th scope="col">ID</th>
@@ -50,7 +50,7 @@
               </tr>
             @endforeach
           </tbody>
-        </table>
+        </table></div>
       @endif
     @endforeach
   </div>

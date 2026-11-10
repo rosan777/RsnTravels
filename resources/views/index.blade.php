@@ -56,7 +56,7 @@
         <div class="section-title">{{ $t["destinations"] }}</div>
         <h2 class="mb-0">{{ $t["popular_destinations"] }}</h2>
       </div>
-      <a href="{{ route('view_destinations') }}">{{ $t["view_all"] }} &rarr;</a>
+      <a class="view-all" href="{{ route('view_destinations') }}">{{ $t["view_all"] }} &rarr;</a>
     </div>
     <div class="bento">
       @foreach ($destinations->take(6) as $destination)
@@ -76,7 +76,7 @@
         <div class="section-title">{{ $t["packages"] }}</div>
         <h2 class="mb-0">{{ $t["featured_packages"] }}</h2>
       </div>
-      <a href="{{ route('view_packages') }}">{{ $t["view_all"] }} &rarr;</a>
+      <a class="view-all" href="{{ route('view_packages') }}">{{ $t["view_all"] }} &rarr;</a>
     </div>
     <div class="row">
       @foreach ($packages->take(4) as $package)
@@ -107,7 +107,7 @@
         <div class="section-title">{{ $t["hotels"] }}</div>
         <h2 class="mb-0">{{ $t["featured_hotels"] }}</h2>
       </div>
-      <a href="{{ route('view_hotels') }}">{{ $t["view_all"] }} &rarr;</a>
+      <a class="view-all" href="{{ route('view_hotels') }}">{{ $t["view_all"] }} &rarr;</a>
     </div>
     <div class="row">
       @foreach ($hotels->take(4) as $hotel)

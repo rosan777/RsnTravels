@@ -10,7 +10,7 @@
         <a href="{{ route('owner_bookings', ['status' => $c[0]]) }}" class="btn btn-sm {{ $status == $c[0] ? 'btn-primary' : 'btn-outline-primary' }}">{{ $c[1] }}</a>
       @endforeach
     </div>
-    <table class="table">
+    <div class="table-responsive"><table class="table">
       <thead><tr><th>ID</th><th>{{ $t["guest"] }}</th><th>{{ $t["item"] }}</th><th>{{ $t["dates"] }}</th><th>{{ $t["total"] }}</th><th>{{ $t["payment"] }}</th><th>{{ $t["status"] }}</th><th></th></tr></thead>
       <tbody>
         @foreach ($bookings as $booking)
@@ -31,7 +31,7 @@
           </tr>
         @endforeach
       </tbody>
-    </table>
+    </table></div>
     {{ $bookings->links() }}
   </div>
 @endsection

@@ -45,7 +45,7 @@
     </form>
     <div class="row">
       @forelse ($items as $package)
-        <div class="col-lg-4 col-md-6 mb-4 reveal">
+        <div class="col-lg-4 col-md-6 col-6 mb-3 mb-md-4 reveal">
           @include("_package_card")
         </div>
       @empty

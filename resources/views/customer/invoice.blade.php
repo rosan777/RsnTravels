@@ -20,7 +20,7 @@
         <div class="col-6"><div class="meta">{{ $t["guest"] }}</div><strong>{{ $booking->user->name }}</strong><br />{{ $booking->user->email }}</div>
         <div class="col-6 text-right"><div class="meta">{{ $t["status"] }}</div><strong>{{ $booking->status }}</strong><br />{{ $booking->payment_method }}</div>
       </div>
-      <table class="table mt-3">
+      <div class="table-responsive"><table class="table mt-3">
         <thead><tr><th>{{ $t["item"] }}</th><th>{{ $t["dates"] }}</th><th>{{ $t["guests"] }}</th><th class="text-right">{{ $t["total"] }}</th></tr></thead>
         <tbody>
           <tr>
@@ -30,7 +30,7 @@
             <td class="text-right">৳{{ number_format($booking->total) }}</td>
           </tr>
         </tbody>
-      </table>
+      </table></div>
       <div class="text-right h4">{{ $t["total"] }}: ৳{{ number_format($booking->total) }}</div>
       <div class="text-muted small">{{ $t["invoice_note"] }}</div>
       <div class="mt-3 d-print-none">

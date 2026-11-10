@@ -42,7 +42,7 @@
     </form>
     <div class="row">
       @forelse ($items as $hotel)
-        <div class="col-lg-4 col-md-6 mb-4 reveal">
+        <div class="col-lg-4 col-md-6 col-6 mb-3 mb-md-4 reveal">
           @include("_hotel_card")
         </div>
       @empty

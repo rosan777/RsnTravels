@@ -399,3 +399,32 @@
   body .btn-contact { background: #ee7b4d !important; border-color: #ee7b4d !important; color: #fff !important; font-weight: 600; }
   body .btn-contact:hover, body .btn-contact:focus { background: #e0663a !important; border-color: #e0663a !important; color: #fff !important; }
 </style>
+<style>
+  /* Responsive polish: wrapping pagination, comfortable touch targets, no sideways scroll */
+  html, body { max-width: 100%; overflow-x: hidden; }
+  img, video, svg { max-width: 100%; }
+  .pagination { flex-wrap: wrap; justify-content: center; gap: 4px 0; }
+  .table-responsive { -webkit-overflow-scrolling: touch; }
+  .table-responsive .table { margin-bottom: 0; }
+  .site-footer a, .site-footer .footer-links a { display: inline-block; padding: 6px 4px; }
+  .section-head a, a.view-all { display: inline-block; padding: 6px 2px; }
+  @media (pointer: coarse) {
+    .btn-sm { min-height: 36px; padding-top: .4rem; padding-bottom: .4rem; }
+    .page-link { min-width: 40px; min-height: 40px; text-align: center; display: flex; align-items: center; justify-content: center; }
+    .navbar .nav-link { padding-top: .65rem; padding-bottom: .65rem; }
+  }
+  @media (max-width: 575.98px) {
+    h1, .display-4, .display-3 { word-break: break-word; }
+    .container { padding-left: 14px; padding-right: 14px; }
+  }
+</style>
+<style>
+  a.view-all { white-space: nowrap; flex: none; }
+  @media (max-width: 575.98px) {
+    /* two compact cards per row on phones for list pages */
+    .card .card-body { padding: .7rem; }
+    .card h5, .card .card-title { font-size: .95rem; }
+    .card .card-text, .card p.small { font-size: .8rem; }
+    .page-banner h1 { font-size: 1.6rem; }
+  }
+</style>

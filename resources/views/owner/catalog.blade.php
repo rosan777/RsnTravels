@@ -7,7 +7,7 @@
     <p class="text-muted">{{ $t["catalog_note"] }}</p>
     @foreach ([["destinations", $destinations, "destination"], ["hotels", $hotels, "hotel"], ["packages", $packages, "package"]] as $group)
       <h4 class="mt-3">{{ $t[$group[0]] }}</h4>
-      <table class="table">
+      <div class="table-responsive"><table class="table">
         <tbody>
           @foreach ($group[1] as $item)
             <tr>
@@ -22,7 +22,7 @@
             </tr>
           @endforeach
         </tbody>
-      </table>
+      </table></div>
     @endforeach
   </div>
 @endsection

@@ -4,7 +4,7 @@
 
 @section("agent_content")
   <div class="container">
-    <table class="table">
+    <div class="table-responsive"><table class="table">
       <thead><tr><th>ID</th><th>{{ $t["guest"] }}</th><th>Phone</th><th>Trip</th><th>{{ $t["dates"] }}</th><th>Status</th></tr></thead>
       <tbody>
         @forelse ($bookings as $b)
@@ -20,6 +20,6 @@
           <tr><td colspan="6" class="text-muted">{{ $t["none"] }}</td></tr>
         @endforelse
       </tbody>
-    </table>
+    </table></div>
   </div>
 @endsection
